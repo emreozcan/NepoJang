@@ -1,0 +1,8 @@
+tmp.sqlite3
+tmp.sqlite3-journal
+
+.idea/
+
+__pycache__/
+*.py[cod]
+*$py.class
