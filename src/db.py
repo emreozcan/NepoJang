@@ -45,7 +45,7 @@ class AccessToken(db.Entity):
     issuer = Required(str)
     created_utc = Required(datetime)
     expiry_utc = Required(datetime)
-    authentication_valid = Required(bool)
+    authentication_valid = Required(bool)  # is access token valid for authenticating with game servers
     account = Required(Account)
     client_token = Required(ClientToken)  # client that created this access token
     profile = Optional(Profile)  # which profile can this access token grants access to
