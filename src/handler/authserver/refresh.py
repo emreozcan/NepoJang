@@ -40,8 +40,16 @@ def json_and_response_code(request):
             "errorMessage": "Access token already has a profile assigned."
         }), 400
 
-    access_tokens = list(AccessToken.select(lambda tkn: tkn.client_token.uuid == UUID(request_data["clientToken"])
-                                            and tkn.uuid == UUID(read_yggt(request_data["accessToken"]))))
+    try:
+        yggt = read_yggt(request_data["accessToken"])
+        access_tokens = list(AccessToken.select(lambda tkn: tkn.client_token.uuid == UUID(request_data["clientToken"])
+                                                and tkn.uuid == UUID(yggt)))
+    except jwt.exceptions.DecodeError:
+        return jsonify({
+            "error": "ForbiddenOperationException",
+            "errorMessage": "Invalid token"
+        }), 403
+
     if len(access_tokens) != 1:
         return jsonify({
             "error": "ForbiddenOperationException",
