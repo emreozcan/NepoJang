@@ -1,5 +1,5 @@
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 from pony.orm import *
 
 
@@ -9,39 +9,46 @@ db = Database()
 
 class Account(db.Entity):
     id = PrimaryKey(int, auto=True)
-    uuid = Required(UUID, unique=True)
+    uuid = Required(UUID, unique=True, auto=uuid4)
     username = Required(str, unique=True)  # login information, or email
     password = Required(str)  # hashed password
     profiles = Set('Profile')
     client_tokens = Set('ClientToken')
     access_tokens = Set('AccessToken')
 
+    def __repr__(self):
+        return f"{self.username} ({str(self.uuid)})"
+
 
 class Profile(db.Entity):
     id = PrimaryKey(int, auto=True)
-    uuid = Required(UUID, unique=True)
+    uuid = Required(UUID, unique=True, auto=uuid4)
+    agent = Required(str)
     name = Required(str, unique=True)  # ign
     account = Required(Account)
     access_tokens = Set('AccessToken')
 
+    def __repr__(self):
+        return f"{self.name} ({str(self.uuid)})"
+
 
 class ClientToken(db.Entity):
     id = PrimaryKey(int, auto=True)
-    uuid = Required(UUID, unique=True)
+    uuid = Required(UUID, unique=True, auto=uuid4)
     account = Required(Account)  # which account does this client token authorize
     access_tokens = Set('AccessToken')
 
 
 class AccessToken(db.Entity):
     id = PrimaryKey(int, auto=True)
-    uuid = Required(UUID, unique=True)
+    uuid = Required(UUID, unique=True, auto=uuid4)
     issuer = Required(str)
     created_utc = Required(datetime)
     expiry_utc = Required(datetime)
     authentication_valid = Required(bool)
     account = Required(Account)
-    profile = Required(Profile)  # which profile can this access token represents
     client_token = Required(ClientToken)  # client that created this access token
+    profile = Optional(Profile)  # which profile can this access token grants access to
 
 
 db.bind(provider="sqlite", filename="tmp.sqlite3", create_db=True)
