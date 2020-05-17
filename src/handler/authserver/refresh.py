@@ -41,10 +41,11 @@ def json_and_response_code(request):
         }), 400
 
     try:
-        yggt = read_yggt(request_data["accessToken"])
-        access_tokens = list(AccessToken.select(lambda tkn: tkn.client_token.uuid == UUID(request_data["clientToken"])
-                                                and tkn.uuid == UUID(yggt)))
-    except jwt.exceptions.DecodeError:
+        yggt = UUID(read_yggt(request_data["accessToken"]))
+        request_client_token_uuid = UUID(request_data["clientToken"])
+        access_tokens = list(AccessToken.select(lambda tkn: tkn.client_token.uuid == request_client_token_uuid
+                                                and tkn.uuid == yggt))
+    except (jwt.exceptions.DecodeError, ValueError):
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid token"

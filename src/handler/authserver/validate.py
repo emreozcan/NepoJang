@@ -26,9 +26,9 @@ def json_and_response_code(request):
         }), 400
 
     try:
-        yggt = read_yggt(request_data["accessToken"])
-        access_tokens = list(AccessToken.select(lambda tkn: tkn.uuid == UUID(yggt)))
-    except jwt.exceptions.DecodeError:
+        yggt = UUID(read_yggt(request_data["accessToken"]))
+        access_tokens = list(AccessToken.select(lambda tkn: tkn.uuid == yggt))
+    except (jwt.exceptions.DecodeError, ValueError):
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid token"
@@ -41,7 +41,11 @@ def json_and_response_code(request):
         }), 403
 
     if "clientToken" in request_keys:
-        client_tokens = list(ClientToken.select(lambda tkn: tkn.uuid == UUID(request_data["clientToken"])))
+        try:
+            request_client_token_uuid = UUID(request_data["clientToken"])
+            client_tokens = list(ClientToken.select(lambda tkn: tkn.uuid == request_client_token_uuid))
+        except ValueError:
+            client_tokens = []
         if len(client_tokens) != 1:
             return jsonify({
                 "error": "ForbiddenOperationException",
