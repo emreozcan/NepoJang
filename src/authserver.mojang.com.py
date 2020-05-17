@@ -4,6 +4,7 @@ import argparse
 import handler.authserver.authenticate
 import handler.authserver.refresh
 import handler.authserver.validate
+import handler.authserver.signout
 import handler.authserver.xerror_404
 import handler.authserver.xerror_405
 
@@ -41,6 +42,11 @@ def http_refresh():
 @app.route("/validate", methods=["POST"])
 def http_validate():
     return handler.authserver.validate.json_and_response_code(request)
+
+
+@app.route("/signout", methods=["POST"])
+def http_signout():
+    return handler.authserver.signout.json_and_response_code(request)
 
 
 app.run(host=args.host, port=args.port, debug=args.debug)

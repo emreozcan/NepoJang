@@ -5,6 +5,7 @@ import jwt
 from flask import jsonify
 
 from db import *
+from handler.authserver._username_password_verify import account_or_none
 from password import password_compare
 
 
@@ -25,18 +26,18 @@ def json_and_response_code(request):
             "errorMessage": "message is marked non-null but is null"
         }), 400
 
-    accounts = list(Account.select(lambda a: a.username == request_data["username"]))
-    if len(accounts) != 1 or not password_compare(request_data["password"], accounts[0].password):
+    account = account_or_none(request_data["username"], request_data["password"])
+    if account is None:
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid credentials. Invalid username or password."
         }), 403
 
     if "clientToken" not in request_keys:
-        client_token = ClientToken(account=accounts[0])
+        client_token = ClientToken(account=account)
     else:
         try:
-            client_token = ClientToken(account=accounts[0], uuid=UUID(request_data["clientToken"]))
+            client_token = ClientToken(account=account, uuid=UUID(request_data["clientToken"]))
         except ValueError as e:
             return jsonify({
                 "error": type(e),
@@ -46,7 +47,7 @@ def json_and_response_code(request):
     optional_profile = {}
     if "agent" in request_keys:
         available_profiles = list(
-            Profile.select(lambda p: p.agent == request_data["agent"]["name"] and p.account == accounts[0]))
+            Profile.select(lambda p: p.agent == request_data["agent"]["name"] and p.account == account))
         if len(available_profiles) == 1:
             optional_profile = {"profile": available_profiles[0]}
 
@@ -56,13 +57,13 @@ def json_and_response_code(request):
         created_utc=utcnow,
         expiry_utc=utcnow + timedelta(days=2),
         authentication_valid=True,
-        account=accounts[0],
+        account=account,
         client_token=client_token,
         **optional_profile
     )
 
     access_token_data = {
-        "sub": accounts[0].uuid.hex,
+        "sub": account.uuid.hex,
         "yggt": access_token.uuid.hex,
         "issr": access_token.issuer,
         "exp": int(access_token.expiry_utc.timestamp()),
@@ -79,8 +80,8 @@ def json_and_response_code(request):
 
     if "requestUser" in request_keys and request_data["requestUser"]:
         response_data["user"] = {
-            "username": accounts[0].username,
-            "id": accounts[0].uuid.hex
+            "username": account.username,
+            "id": account.uuid.hex
         }
 
     if "profile" in optional_profile:
@@ -93,7 +94,7 @@ def json_and_response_code(request):
         response_data["availableProfiles"] = []
 
     for token in AccessToken \
-            .select(lambda candidate: candidate.account == accounts[0] and candidate != access_token):
+            .select(lambda candidate: candidate.account == account and candidate != access_token):
         token.authentication_valid = False
 
     return jsonify(response_data), 200
