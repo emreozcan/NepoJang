@@ -2,6 +2,7 @@ from flask import Flask, request
 import argparse
 
 import handler.authserver.authenticate
+import handler.authserver.refresh
 import handler.authserver.xerror_404
 import handler.authserver.xerror_405
 
@@ -29,6 +30,11 @@ def http_405(e):
 @app.route("/authenticate", methods=["POST"])
 def http_authenticate():
     return handler.authserver.authenticate.json_and_response_code(request)
+
+
+@app.route("/refresh", methods=["POST"])
+def http_refresh():
+    return handler.authserver.refresh.json_and_response_code(request)
 
 
 app.run(host=args.host, port=args.port, debug=args.debug)
