@@ -1,7 +1,8 @@
 from json import loads, decoder
 from flask import jsonify
+from pony.orm import db_session
 
-from db import AccessToken, db_session
+from db import AccessToken
 from handler.authserver._username_password_verify import account_or_none
 
 

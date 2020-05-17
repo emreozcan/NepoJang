@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
-from pony.orm import *
 
+from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional
 
 set_sql_debug(True)
 db = Database()

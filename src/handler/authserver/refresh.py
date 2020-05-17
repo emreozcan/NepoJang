@@ -4,9 +4,10 @@ from uuid import UUID
 from flask import jsonify
 
 import jwt
+from pony.orm import db_session
 
 from handler.authserver._jwt_access_token import read_yggt
-from db import AccessToken, db_session
+from db import AccessToken
 
 
 @db_session
