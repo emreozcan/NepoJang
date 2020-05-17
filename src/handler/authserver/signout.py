@@ -1,5 +1,4 @@
 from json import loads, decoder
-
 from flask import jsonify
 
 from db import AccessToken, db_session

@@ -1,14 +1,12 @@
 from datetime import datetime, timedelta
 from json import loads, decoder
 from uuid import UUID
+from flask import jsonify
 
 import jwt
 
 from handler.authserver._jwt_access_token import read_yggt
-
 from db import AccessToken, db_session
-
-from flask import jsonify
 
 
 @db_session

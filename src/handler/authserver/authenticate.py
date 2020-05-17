@@ -1,12 +1,11 @@
 from datetime import timedelta
 from json import loads, decoder
+from flask import jsonify
 
 import jwt
-from flask import jsonify
 
 from db import *
 from handler.authserver._username_password_verify import account_or_none
-from password import password_compare
 
 
 @db_session

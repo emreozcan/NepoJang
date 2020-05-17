@@ -1,5 +1,6 @@
-from flask import Flask, request
 import argparse
+
+from flask import Flask, request
 
 import handler.authserver.authenticate
 import handler.authserver.refresh
