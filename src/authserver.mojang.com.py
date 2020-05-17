@@ -17,18 +17,18 @@ app = Flask(__name__)
 
 
 @app.errorhandler(404)
-def _404(e):
-    return handler.authserver.xerror_404.xerror_404()
+def http_404(e):
+    return handler.authserver.xerror_404.json_and_response_code()
 
 
 @app.errorhandler(405)
-def _405(e):
-    return handler.authserver.xerror_405.xerror_405()
+def http_405(e):
+    return handler.authserver.xerror_405.json_and_response_code()
 
 
 @app.route("/authenticate", methods=["POST"])
-def authenticate():
-    return handler.authserver.authenticate.authenticate(request)
+def http_authenticate():
+    return handler.authserver.authenticate.json_and_response_code(request)
 
 
 app.run(host=args.host, port=args.port, debug=args.debug)

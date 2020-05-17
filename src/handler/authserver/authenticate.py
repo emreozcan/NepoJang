@@ -9,7 +9,7 @@ from password import password_compare
 
 
 @db_session
-def authenticate(request):
+def json_and_response_code(request):
     try:
         request_data = loads(request.data)
     except decoder.JSONDecodeError as e:
@@ -61,14 +61,19 @@ def authenticate(request):
         **optional_profile
     )
 
+    access_token_data = {
+        "sub": accounts[0].uuid.hex,
+        "yggt": access_token.uuid.hex,
+        "issr": access_token.issuer,
+        "exp": int(access_token.expiry_utc.timestamp()),
+        "iat": int(access_token.created_utc.timestamp())
+    }
+
+    if "profile" in optional_profile:
+        access_token_data["spr"] = optional_profile["profile"].uuid.hex
+
     response_data = {
-        "accessToken": jwt.encode({
-            "sub": accounts[0].uuid.hex,
-            "yggt": access_token.uuid.hex,
-            "issr": access_token.issuer,
-            "exp": int(access_token.expiry_utc.timestamp()),
-            "iat": int(access_token.created_utc.timestamp())
-        }, key="").decode(),
+        "accessToken": jwt.encode(access_token_data, key="").decode(),
         "clientToken": client_token.uuid.hex
     }
 
@@ -84,9 +89,11 @@ def authenticate(request):
             "id": optional_profile["profile"].uuid.hex
         }
         response_data["availableProfiles"] = [response_data["selectedProfile"]]
+    else:
+        response_data["availableProfiles"] = []
 
     for token in AccessToken \
             .select(lambda candidate: candidate.account == accounts[0] and candidate != access_token):
         token.authentication_valid = False
 
-    return response_data, 200
+    return jsonify(response_data), 200
