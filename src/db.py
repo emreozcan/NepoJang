@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional
 
-set_sql_debug(True)
+set_sql_debug(False)
 db = Database()
 
 
@@ -17,7 +17,10 @@ class Account(db.Entity):
     access_tokens = Set('AccessToken')
 
     def __repr__(self):
-        return f"{self.username} ({str(self.uuid)})"
+        return f"{self.id}, {self.username}, {self.uuid}"
+
+    def __str__(self):
+        return repr(self)
 
 
 class Profile(db.Entity):
@@ -29,7 +32,10 @@ class Profile(db.Entity):
     access_tokens = Set('AccessToken')
 
     def __repr__(self):
-        return f"{self.name} ({str(self.uuid)})"
+        return f"{self.id}, {self.name}, {str(self.uuid)} --> {self.account.username}"
+
+    def __str__(self):
+        return repr(self)
 
 
 class ClientToken(db.Entity):
