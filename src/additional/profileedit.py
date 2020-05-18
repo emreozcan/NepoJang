@@ -24,7 +24,7 @@ def call(program, argv):
 
     profile = Profile.get(id=args.dbid)
     if profile is None:
-        print("No account matches that DBID!")
+        print("No profile matches that DBID!")
         exit(1)
 
     if args.uuid is not None:

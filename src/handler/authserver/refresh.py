@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from json import loads, decoder
 from uuid import UUID
 from flask import jsonify
@@ -56,12 +55,7 @@ def json_and_response_code(request):
             "errorMessage": "Invalid token."
         }), 403
 
-    utcnow = datetime.utcnow()
     new_access_token = AccessToken(
-        issuer="Yggdrasil-Auth",
-        created_utc=utcnow,
-        expiry_utc=utcnow + timedelta(days=2),
-        authentication_valid=True,
         account=access_tokens[0].account,
         client_token=access_tokens[0].client_token,
         profile=access_tokens[0].profile
@@ -69,19 +63,8 @@ def json_and_response_code(request):
 
     access_tokens[0].delete()
 
-    access_token_data = {
-        "sub": new_access_token.account.uuid.hex,
-        "yggt": new_access_token.uuid.hex,
-        "issr": new_access_token.issuer,
-        "exp": int(new_access_token.expiry_utc.timestamp()),
-        "iat": int(new_access_token.created_utc.timestamp())
-    }
-
-    if new_access_token.profile:
-        access_token_data["spr"] = new_access_token.profile.uuid.hex
-
     response_data = {
-        "accessToken": jwt.encode(access_token_data, key="").decode(),
+        "accessToken": jwt.encode(new_access_token.format(), key="").decode(),
         "clientToken": new_access_token.client_token.uuid.hex,
     }
 

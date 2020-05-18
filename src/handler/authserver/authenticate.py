@@ -1,4 +1,3 @@
-from datetime import timedelta, datetime
 from json import loads, decoder
 from uuid import UUID
 
@@ -53,30 +52,14 @@ def json_and_response_code(request):
         if len(available_profiles) == 1:
             optional_profile = {"profile": available_profiles[0]}
 
-    utcnow = datetime.utcnow()
     access_token = AccessToken(
-        issuer="Yggdrasil-Auth",
-        created_utc=utcnow,
-        expiry_utc=utcnow + timedelta(days=2),
-        authentication_valid=True,
         account=account,
         client_token=client_token,
         **optional_profile
     )
 
-    access_token_data = {
-        "sub": account.uuid.hex,
-        "yggt": access_token.uuid.hex,
-        "issr": access_token.issuer,
-        "exp": int(access_token.expiry_utc.timestamp()),
-        "iat": int(access_token.created_utc.timestamp())
-    }
-
-    if "profile" in optional_profile:
-        access_token_data["spr"] = optional_profile["profile"].uuid.hex
-
     response_data = {
-        "accessToken": jwt.encode(access_token_data, key="").decode(),
+        "accessToken": jwt.encode(access_token.format(), key="").decode(),
         "clientToken": client_token.uuid.hex
     }
 

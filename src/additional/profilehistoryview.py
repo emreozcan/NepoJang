@@ -16,11 +16,11 @@ def call(program, argv):
 
     profile = Profile.get(id=args.dbid)
     if profile is None:
-        print("No account matches that DBID!")
+        print("No profile matches that DBID!")
         exit(1)
 
     print(f"History of {profile}")
-    print(f"Name styles: {profile.name}, {profile.name_upper}, {profile.name_lower}")
+    print(f"Current name styles: {profile.name}, {profile.name_upper}, {profile.name_lower}")
 
     for event in profile.profile_name_events.order_by(desc(ProfileNameEvent.active_from)):
         if event.is_initial_name:

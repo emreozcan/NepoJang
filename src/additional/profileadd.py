@@ -1,10 +1,9 @@
 import argparse
-from datetime import datetime
 from uuid import uuid4, UUID
 
 from pony.orm import db_session, commit
 
-from db import Account, Profile, ProfileNameEvent
+from db import Account, Profile
 
 
 @db_session
@@ -29,22 +28,15 @@ def call(program, argv):
         print(f"Account already has a profile! ({list(account.profiles)[0]})")
         exit(1)
 
-    profile = Profile(
+    if not Profile.is_name_available(args.name):
+        print("Name not available.")
+        exit(1)
+
+    profile = Profile.create_profile_and_history(
         uuid=input_uuid,
         agent=args.agent,
         account=account,
-        name=args.name,
-        name_upper=args.name.upper(),
-        name_lower=args.name.lower()
-    )
-
-    first_name_event = ProfileNameEvent(
-        profile=profile,
-        active_from=datetime.utcnow(),
-        is_initial_name=True,
-        name=args.name,
-        name_upper=args.name.upper(),
-        name_lower=args.name.lower()
+        name=args.name
     )
 
     try:
@@ -54,4 +46,3 @@ def call(program, argv):
         exit(1)
 
     print(profile)
-    print(first_name_event)

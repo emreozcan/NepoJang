@@ -1,5 +1,4 @@
 import argparse
-from datetime import datetime
 
 from pony.orm import db_session
 from pony.orm.core import commit
@@ -18,20 +17,14 @@ def call(program, argv):
 
     profile = Profile.get(id=args.dbid)
     if profile is None:
-        print("No account matches that DBID!")
+        print("No profile matches that DBID!")
         exit(1)
 
-    profile.name = args.name
-    profile.name_upper = args.name.upper()
-    profile.name_lower = args.name.lower()
-    name_event = ProfileNameEvent(
-        profile=profile,
-        active_from=datetime.utcnow(),
-        is_initial_name=False,
-        name=args.name,
-        name_upper=args.name.upper(),
-        name_lower=args.name.lower()
-    )
+    if not Profile.is_name_available(args.name):
+        print("Name not available.")
+        exit(1)
+
+    profile.attempt_name_change(args.name)
 
     try:
         commit()
@@ -40,4 +33,3 @@ def call(program, argv):
         exit(1)
 
     print(profile)
-    print(name_event)
