@@ -32,7 +32,7 @@ class Profile(db.Entity):
     access_tokens = Set('AccessToken')
 
     def __repr__(self):
-        return f"{self.id}, {self.name}, {str(self.uuid)} --> {self.account.username}"
+        return f"{self.id}, {self.name}, {self.agent}, {str(self.uuid)} --> {self.account.id}, {self.account.username}"
 
     def __str__(self):
         return repr(self)
