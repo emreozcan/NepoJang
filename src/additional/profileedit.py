@@ -17,7 +17,6 @@ def call(program, argv):
     uuids.add_argument("-u", "--uuid", help="change profile UUID", type=UUID)
     uuids.add_argument("-ru", "--random-uuid", help="refresh profile UUID", action="store_true")
 
-    parser.add_argument("-n", "--name", help="change profile name")
     parser.add_argument("-a", "--agent", help="change profile agent")
     parser.add_argument("--delete", help="delete this profile", action="store_true")
 
@@ -32,8 +31,6 @@ def call(program, argv):
         profile.uuid = args.uuid
     if args.random_uuid:
         profile.uuid = uuid4()
-    if args.name is not None:
-        profile.name = args.name
     if args.agent is not None:
         profile.agent = args.agent
     if args.delete:
