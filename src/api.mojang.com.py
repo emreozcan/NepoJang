@@ -3,6 +3,7 @@ import argparse
 from flask import Flask, request
 
 import handler.api.username_and_time_to_uuid
+import handler.api.uuid_to_name_history
 import handler.api.xerror_404
 import handler.api.xerror_405
 
@@ -30,6 +31,11 @@ def http_405(e):
 @app.route("/users/profiles/minecraft/<username>")
 def http_username_and_time_to_uuid(username):
     return handler.api.username_and_time_to_uuid.json_and_response_code(request, username)
+
+
+@app.route("/user/profiles/<uuid>/names")
+def http_uuid_to_name_history(uuid):
+    return handler.api.uuid_to_name_history.json_and_response_code(uuid)
 
 
 app.run(host=args.host, port=args.port, debug=args.debug)
