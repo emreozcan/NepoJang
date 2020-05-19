@@ -53,7 +53,6 @@ def json_and_response_code(request):
             optional_profile = {"profile": available_profiles[0]}
 
     access_token = AccessToken(
-        account=account,
         client_token=client_token,
         **optional_profile
     )
@@ -79,7 +78,7 @@ def json_and_response_code(request):
         response_data["availableProfiles"] = []
 
     for token in AccessToken \
-            .select(lambda candidate: candidate.account == account and candidate != access_token):
+            .select(lambda candidate: candidate.client_token.account == account and candidate != access_token):
         token.authentication_valid = False
 
     return jsonify(response_data), 200

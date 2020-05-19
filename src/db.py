@@ -14,7 +14,6 @@ class Account(db.Entity):
     password = Required(str)  # hashed password
     profiles = Set('Profile')  # official Mojang api supports 1 profile but multiple may be supported in the future
     client_tokens = Set('ClientToken')
-    access_tokens = Set('AccessToken')
 
     def __repr__(self):
         return f"{self.id}, {self.username}, {self.uuid}"
@@ -43,14 +42,19 @@ class Profile(db.Entity):
         self.set_name_and_styles(new_name_attempt)
         ProfileNameEvent(
             profile=self,
-            is_initial_name=False,
             name=new_name_attempt
         )
 
     def get_name_event_at(self, datetime_object: datetime):
+        if datetime == datetime.utcfromtimestamp(0):
+            self.get_first_name_event()
+
         pne = ProfileNameEvent.select(lambda x: x.profile == self and x.active_from < datetime_object)\
             .order_by(desc(ProfileNameEvent.active_from))
         return pne.first()
+
+    def get_first_name_event(self):
+        return ProfileNameEvent.select(lambda x: x.profile == self).order_by(ProfileNameEvent.active_from).first()
 
     def can_change_name_to(self, new_name_attempt) -> bool:
         if Profile.select(lambda profile: profile.name == new_name_attempt and profile != self).exists():
@@ -76,7 +80,6 @@ class Profile(db.Entity):
         new_profile = Profile(*args, **kwargs)
         ProfileNameEvent(
             profile=new_profile,
-            is_initial_name=True,
             name=kwargs["name"]
         )
         return new_profile
@@ -101,6 +104,13 @@ class ClientToken(db.Entity):
     account = Required(Account)  # which account does this client token authorize
     access_tokens = Set('AccessToken')
 
+    def __repr__(self):
+        return f"{self.id}, {self.uuid}, related {self.access_tokens.count()} AccessTokens " \
+               f"-of> {self.account.id}, {self.account.username}"
+
+    def __str__(self):
+        return repr(self)
+
 
 class AccessToken(db.Entity):
     id = PrimaryKey(int, auto=True)
@@ -109,13 +119,12 @@ class AccessToken(db.Entity):
     created_utc = Required(datetime, default=datetime.utcnow)
     expiry_utc = Required(datetime, default=lambda: datetime.utcnow()+timedelta(days=2))
     authentication_valid = Required(bool, default=True)  # is access token valid for authenticating with game servers
-    account = Required(Account)
     client_token = Required(ClientToken)  # client that created this access token
     profile = Optional(Profile)  # which profile can this access token grants access to
 
     def format(self):
         data = {
-            "sub": self.account.uuid.hex,
+            "sub": self.client_token.account.uuid.hex,
             "yggt": self.uuid.hex,
             "issr": self.issuer,
             "exp": int(self.expiry_utc.timestamp()),
@@ -125,15 +134,27 @@ class AccessToken(db.Entity):
             data["spr"] = self.profile.uuid.hex
         return data
 
+    def __repr__(self):
+        return f"{self.id}, {self.uuid}, {'valid' if self.authentication_valid else 'invalid'}, " \
+               f"{self.created_utc} to {self.expiry_utc}, by {self.issuer}, {self.client_token.id}, " \
+               f"{'generic' if self.profile is None else f'for {self.profile.id}, {self.profile.name}'} " \
+               f"-of> {self.client_token.account.id}, {self.client_token.account.username}"
+
+    def __str__(self):
+        return repr(self)
+
 
 class ProfileNameEvent(db.Entity):
     id = PrimaryKey(int, auto=True)
     profile = Required(Profile)
     active_from = Required(datetime, default=datetime.utcnow)
-    is_initial_name = Required(bool)
     name = Required(str)
     name_upper = Required(str)
     name_lower = Required(str)
+
+    def is_initial_name(self):
+        return not ProfileNameEvent.select(lambda x: x.profile == self.profile and x.active_from < self.active_from)\
+            .exists()
 
     def __init__(self, *args, **kwargs):
         if "name_upper" not in kwargs:
@@ -143,9 +164,9 @@ class ProfileNameEvent(db.Entity):
         super().__init__(*args, **kwargs)
 
     def __repr__(self):
-        if self.is_initial_name:
-            return f"Profile ({self.profile.id}, {self.profile.name}) created with: {self.name}"
-        return f"Profile ({self.profile.id}, {self.profile.name}), @ {self.active_from}: {self.name}"
+        return f"Profile ({self.profile.id}, {self.profile.name}), " \
+               f"{'created with' if self.is_initial_name() else 'changed name'} " \
+               f"@ {self.active_from}: {self.name}"
 
     def __str__(self):
         return repr(self)

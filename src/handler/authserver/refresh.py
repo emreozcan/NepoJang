@@ -55,7 +55,6 @@ def json_and_response_code(request):
         }), 403
 
     new_access_token = AccessToken(
-        account=access_token.account,
         client_token=access_token.client_token,
         profile=access_token.profile
     )
@@ -75,8 +74,8 @@ def json_and_response_code(request):
 
     if "requestUser" in request_keys and request_data["requestUser"]:
         response_data["user"] = {
-            "id": new_access_token.account.uuid.hex,
-            "username": new_access_token.account.username
+            "id": new_access_token.client_token.account.uuid.hex,
+            "username": new_access_token.client_token.account.username
         }
 
     return jsonify(response_data), 200

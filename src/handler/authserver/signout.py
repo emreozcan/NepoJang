@@ -30,6 +30,6 @@ def json_and_response_code(request):
             "errorMessage": "Invalid credentials. Invalid username or password."
         }), 403
 
-    AccessToken.select(lambda tkn: tkn.account == account).delete()
+    AccessToken.select(lambda tkn: tkn.client_token.account == account).delete()
 
     return "", 204

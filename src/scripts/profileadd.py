@@ -25,7 +25,7 @@ def call(program, argv):
         exit(1)
 
     if account.profiles.count() != 0:
-        print(f"Account already has a profile! ({list(account.profiles)[0]})")
+        print(f"Account already has a profile!\n({list(account.profiles)[0]})")
         exit(1)
 
     if not Profile.is_name_available(args.name):
