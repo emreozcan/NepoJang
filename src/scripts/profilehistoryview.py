@@ -11,6 +11,7 @@ def call(program, argv):
     parser = argparse.ArgumentParser(prog=program)
 
     parser.add_argument("dbid", help="DBID of profile", type=int)
+    parser.add_argument("--unix", help="show timestamps as integer", action="store_true")
 
     args = parser.parse_args(argv)
 
@@ -23,4 +24,7 @@ def call(program, argv):
     print(f"Current name styles: {profile.name}, {profile.name_upper}, {profile.name_lower}")
 
     for event in profile.profile_name_events.order_by(desc(ProfileNameEvent.active_from)):
-        print(event)
+        if args.unix:
+            print(event.repr_timestamp())
+        else:
+            print(event)

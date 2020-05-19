@@ -21,7 +21,7 @@ def call(program, argv):
         exit(1)
 
     try:
-        event = profile.get_name_event_at(datetime.utcfromtimestamp(args.timestamp))
+        event = profile.get_active_name_event_at(datetime.utcfromtimestamp(args.timestamp))
     except OSError:
         print("Invalid timestamp.")
         exit(1)

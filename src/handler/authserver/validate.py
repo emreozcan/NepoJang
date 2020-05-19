@@ -11,23 +11,14 @@ from handler.authserver._jwt_access_token import read_yggt
 
 @db_session
 def json_and_response_code(request):
-    try:
-        request_data = loads(request.data)
-    except decoder.JSONDecodeError as e:
-        return jsonify({
-            "error": "JsonEOFException",
-            "errorMessage": f"{e.msg}: line {e.lineno} column {e.colno} (char {e.pos})"
-        }), 400
-    request_keys = request_data.keys()
-
-    if "accessToken" not in request_keys:
+    if "accessToken" not in request.json:
         return jsonify({
             "error": "IllegalArgumentException",
             "errorMessage": "Access Token can not be null or empty."
         }), 400
 
     try:
-        yggt = UUID(read_yggt(request_data["accessToken"]))
+        yggt = UUID(read_yggt(request.json["accessToken"]))
         access_token = AccessToken.get(lambda t: t.uuid == yggt)
     except (jwt.exceptions.DecodeError, ValueError):
         return jsonify({
@@ -41,9 +32,9 @@ def json_and_response_code(request):
             "errorMessage": "Invalid token"
         }), 403
 
-    if "clientToken" in request_keys:
+    if "clientToken" in request.json:
         try:
-            request_client_token_uuid = UUID(request_data["clientToken"])
+            request_client_token_uuid = UUID(request.json["clientToken"])
             client_token = ClientToken.get(lambda t: t.uuid == request_client_token_uuid)
         except ValueError:
             client_token = None

@@ -11,23 +11,14 @@ from handler.authserver._jwt_access_token import read_yggt
 
 @db_session
 def json_and_response_code(request):
-    try:
-        request_data = loads(request.data)
-    except decoder.JSONDecodeError as e:
-        return jsonify({
-            "error": "JsonEOFException",
-            "errorMessage": f"{e.msg}: line {e.lineno} column {e.colno} (char {e.pos})"
-        }), 400
-    request_keys = request_data.keys()
-
-    if "accessToken" not in request_keys:
+    if "accessToken" not in request.json:
         return "", 204
 
     try:
-        yggt = UUID(read_yggt(request_data["accessToken"]))
+        yggt = UUID(read_yggt(request.json["accessToken"]))
         access_tokens = AccessToken.select(lambda tkn: tkn.uuid == yggt)
-        if "clientToken" in request_keys:
-            request_client_token_uuid = UUID(request_data["clientToken"])
+        if "clientToken" in request.json:
+            request_client_token_uuid = UUID(request.json["clientToken"])
             access_tokens = access_tokens.filter(lambda tkn: tkn.client_token.uuid == request_client_token_uuid)
     except (jwt.exceptions.DecodeError, ValueError):
         return "", 204

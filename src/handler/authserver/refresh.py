@@ -11,36 +11,27 @@ from db import AccessToken
 
 @db_session
 def json_and_response_code(request):
-    try:
-        request_data = loads(request.data)
-    except decoder.JSONDecodeError as e:
-        return jsonify({
-            "error": "JsonEOFException",
-            "errorMessage": f"{e.msg}: line {e.lineno} column {e.colno} (char {e.pos})"
-        }), 400
-    request_keys = request_data.keys()
-
-    if "clientToken" not in request_keys or request_data["clientToken"] is None:
+    if "clientToken" not in request.json or request.json["clientToken"] is None:
         return jsonify({
             "error": "IllegalArgumentException",
             "errorMessage": "Missing clientToken."
         }), 403
 
-    if "accessToken" not in request_keys or request_data["accessToken"] is None:
+    if "accessToken" not in request.json or request.json["accessToken"] is None:
         return jsonify({
             "error": "IllegalArgumentException",
             "errorMessage": "Access Token can not be null or empty."
         }), 400
 
-    if "selectedProfile" in request_keys:
+    if "selectedProfile" in request.json:
         return jsonify({
             "error": "IllegalArgumentException",
             "errorMessage": "Access token already has a profile assigned."
         }), 400
 
     try:
-        yggt = UUID(read_yggt(request_data["accessToken"]))
-        request_client_token_uuid = UUID(request_data["clientToken"])
+        yggt = UUID(read_yggt(request.json["accessToken"]))
+        request_client_token_uuid = UUID(request.json["clientToken"])
         access_token = AccessToken.get(lambda t: t.client_token.uuid == request_client_token_uuid and t.uuid == yggt)
     except (jwt.exceptions.DecodeError, ValueError):
         return jsonify({
@@ -72,7 +63,7 @@ def json_and_response_code(request):
             "name": new_access_token.profile.name
         }
 
-    if "requestUser" in request_keys and request_data["requestUser"]:
+    if "requestUser" in request.json and request.json["requestUser"]:
         response_data["user"] = {
             "id": new_access_token.client_token.account.uuid.hex,
             "username": new_access_token.client_token.account.username

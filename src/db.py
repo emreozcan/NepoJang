@@ -62,7 +62,7 @@ class Profile(db.Entity):
             name=new_name_attempt
         )
 
-    def get_name_event_at(self, datetime_object: datetime):
+    def get_active_name_event_at(self, datetime_object: datetime):
         """Find active ProfileNameEvent at time.
 
         Find most recent ProfileNameEvent older than given time.
@@ -74,13 +74,37 @@ class Profile(db.Entity):
         :return: ProfileNameEvent that was active at given time
         :rtype: ProfileNameEvent
         """
-
         if datetime == datetime.utcfromtimestamp(0):
             self.get_first_name_event()
 
         pne = ProfileNameEvent.select(lambda x: x.profile == self and x.active_from < datetime_object)\
             .order_by(desc(ProfileNameEvent.active_from))
         return pne.first()
+
+    @staticmethod
+    def get_owner_profile_at(name, datetime_object: datetime):
+        """Find profile that owned the name at time.
+
+        :param name: Case-insensitive profile name
+        :param datetime_object: Time to look up the UUID
+        :return: ProfileNameEvent that defined the owner of the name at given time
+        :rtype: ProfileNameEvent or None
+        """
+        event = ProfileNameEvent.select(lambda x: (x.name == name
+                                        or x.name_upper == name.upper()
+                                        or x.name_lower == name.lower())
+                                        and x.active_from < datetime_object)\
+            .order_by(desc(ProfileNameEvent.active_from)).first()
+
+        if event is None:
+            return None
+
+        if ProfileNameEvent.select(lambda x: x.profile == event.profile
+                                   and x.active_from > event.active_from
+                                   and x.active_from < datetime_object).exists():
+            return None
+
+        return event
 
     def get_first_name_event(self):
         """Get initial NameEvent for this profile.
@@ -191,6 +215,7 @@ class Profile(db.Entity):
         """
         new_profile = Profile(*args, **kwargs)
         ProfileNameEvent(
+            active_from=datetime.utcfromtimestamp(0),
             profile=new_profile,
             name=kwargs["name"]
         )
@@ -295,6 +320,12 @@ class ProfileNameEvent(db.Entity):
         if "name_lower" not in kwargs:
             kwargs["name_lower"] = kwargs["name"].lower()
         super().__init__(*args, **kwargs)
+
+    def repr_timestamp(self):
+        """Use integer timestamps instead of human readable time like in __repr__()"""
+        return f"Profile ({self.profile.id}, {self.profile.name}), " \
+               f"{'created with' if self.is_initial_name else 'changed name'} " \
+               f"@ {self.active_from.timestamp()}: {self.name}"
 
     def __repr__(self):
         return f"Profile ({self.profile.id}, {self.profile.name}), " \

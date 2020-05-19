@@ -12,33 +12,24 @@ from handler.authserver._username_password_verify import account_or_none
 
 @db_session
 def json_and_response_code(request):
-    try:
-        request_data = loads(request.data)
-    except decoder.JSONDecodeError as e:
-        return jsonify({
-            "error": "JsonEOFException",
-            "errorMessage": f"{e.msg}: line {e.lineno} column {e.colno} (char {e.pos})"
-        }), 400
-    request_keys = request_data.keys()
-
-    if "username" not in request_keys or "password" not in request_keys:
+    if "username" not in request.json or "password" not in request.json:
         return jsonify({
             "error": "IllegalArgumentException",
             "errorMessage": "message is marked non-null but is null"
         }), 400
 
-    account = account_or_none(request_data["username"], request_data["password"])
+    account = account_or_none(request.json["username"], request.json["password"])
     if account is None:
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid credentials. Invalid username or password."
         }), 403
 
-    if "clientToken" not in request_keys:
+    if "clientToken" not in request.json:
         client_token = ClientToken(account=account)
     else:
         try:
-            client_token = ClientToken(account=account, uuid=UUID(request_data["clientToken"]))
+            client_token = ClientToken(account=account, uuid=UUID(request.json["clientToken"]))
         except ValueError as e:
             return jsonify({
                 "error": type(e),
@@ -46,9 +37,9 @@ def json_and_response_code(request):
             }), 400
 
     optional_profile = {}
-    if "agent" in request_keys:
+    if "agent" in request.json:
         available_profiles = list(
-            Profile.select(lambda p: p.agent == request_data["agent"]["name"] and p.account == account))
+            Profile.select(lambda p: p.agent == request.json["agent"]["name"] and p.account == account))
         if len(available_profiles) == 1:
             optional_profile = {"profile": available_profiles[0]}
 
@@ -62,7 +53,7 @@ def json_and_response_code(request):
         "clientToken": client_token.uuid.hex
     }
 
-    if "requestUser" in request_keys and request_data["requestUser"]:
+    if "requestUser" in request.json and request.json["requestUser"]:
         response_data["user"] = {
             "username": account.username,
             "id": account.uuid.hex
