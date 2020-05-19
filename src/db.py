@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional
+from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
 set_sql_debug(False)
 db = Database()
@@ -46,6 +46,11 @@ class Profile(db.Entity):
             is_initial_name=False,
             name=new_name_attempt
         )
+
+    def get_name_event_at(self, datetime_object: datetime):
+        pne = ProfileNameEvent.select(lambda x: x.profile == self and x.active_from < datetime_object)\
+            .order_by(desc(ProfileNameEvent.active_from))
+        return pne.first()
 
     def can_change_name_to(self, new_name_attempt) -> bool:
         if Profile.select(lambda profile: profile.name == new_name_attempt and profile != self).exists():
