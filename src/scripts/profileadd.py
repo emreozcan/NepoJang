@@ -28,7 +28,7 @@ def call(program, argv):
         print(f"Account already has a profile!\n({list(account.profiles)[0]})")
         exit(1)
 
-    if not Profile.is_name_available(args.name):
+    if Profile.is_name_taken(args.name):
         print("Name not available.")
         exit(1)
 

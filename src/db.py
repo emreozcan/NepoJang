@@ -66,14 +66,14 @@ class Profile(db.Entity):
         return True
 
     @staticmethod
-    def is_name_available(new_name_attempt) -> bool:
+    def is_name_taken(new_name_attempt) -> bool:
         if Profile.select(lambda profile: profile.name == new_name_attempt).exists():
-            return False
+            return True
         if Profile.select(lambda profile: profile.name_upper == new_name_attempt.upper()).exists():
-            return False
+            return True
         if Profile.select(lambda profile: profile.name_lower == new_name_attempt.lower()).exists():
-            return False
-        return True
+            return True
+        return False
 
     @staticmethod
     def create_profile_and_history(*args, **kwargs):
