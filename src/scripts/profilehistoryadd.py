@@ -15,12 +15,12 @@ def call(program, argv):
 
     args = parser.parse_args(argv)
 
-    profile = Profile.get(id=args.dbid)
+    profile: Profile = Profile.get(id=args.dbid)
     if profile is None:
         print("No profile matches that DBID!")
         exit(1)
 
-    if not Profile.is_name_available(args.name):
+    if not profile.can_change_name_to(args.name):
         print("Name not available.")
         exit(1)
 

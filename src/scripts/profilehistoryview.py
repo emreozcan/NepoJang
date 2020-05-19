@@ -14,7 +14,7 @@ def call(program, argv):
 
     args = parser.parse_args(argv)
 
-    profile = Profile.get(id=args.dbid)
+    profile: Profile = Profile.get(id=args.dbid)
     if profile is None:
         print("No profile matches that DBID!")
         exit(1)

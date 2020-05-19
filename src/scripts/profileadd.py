@@ -19,7 +19,7 @@ def call(program, argv):
 
     input_uuid = args.uuid if args.uuid is not None else uuid4()
 
-    account = Account.get(id=args.dbid)
+    account: Account = Account.get(id=args.dbid)
     if account is None:
         print("No account matches that DBID!")
         exit(1)

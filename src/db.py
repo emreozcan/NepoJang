@@ -47,6 +47,15 @@ class Profile(db.Entity):
             name=new_name_attempt
         )
 
+    def can_change_name_to(self, new_name_attempt) -> bool:
+        if Profile.select(lambda profile: profile.name == new_name_attempt and profile != self).exists():
+            return False
+        if Profile.select(lambda profile: profile.name_upper == new_name_attempt.upper() and profile != self).exists():
+            return False
+        if Profile.select(lambda profile: profile.name_lower == new_name_attempt.lower() and profile != self).exists():
+            return False
+        return True
+
     @staticmethod
     def is_name_available(new_name_attempt) -> bool:
         if Profile.select(lambda profile: profile.name == new_name_attempt).exists():

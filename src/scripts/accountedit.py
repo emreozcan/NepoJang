@@ -24,7 +24,7 @@ def call(program, argv):
 
     args = parser.parse_args(argv)
 
-    account = Account.get(id=args.dbid)
+    account: Account = Account.get(id=args.dbid)
     if account is None:
         print("No account matches that DBID!")
         exit(1)

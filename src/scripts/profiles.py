@@ -27,7 +27,7 @@ def call(program, argv):
     profiles = Profile.select()
 
     if args.owner is not None:
-        expected_owner = Account.get(id=args.owner)
+        expected_owner: Account = Account.get(id=args.owner)
         if expected_owner is None:
             print("This owner DBID doesn't match any accounts!")
             exit(1)
