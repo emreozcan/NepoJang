@@ -20,7 +20,11 @@ def call(program, argv):
         print("No profile matches that DBID!")
         exit(1)
 
-    if not profile.can_change_name_to(args.name):
+    if not profile.name_change_is_allowed():
+        print(f"Cannot change name until {profile.name_change_time_until()}. Wait {profile.name_change_wait_delta()}.")
+        exit(1)
+
+    if not profile.name_available_for_change(args.name):
         print("Name not available.")
         exit(1)
 
