@@ -41,27 +41,26 @@ def json_and_response_code(request):
     try:
         yggt = UUID(read_yggt(request_data["accessToken"]))
         request_client_token_uuid = UUID(request_data["clientToken"])
-        access_tokens = list(AccessToken.select(lambda tkn: tkn.client_token.uuid == request_client_token_uuid
-                                                and tkn.uuid == yggt))
+        access_token = AccessToken.get(lambda t: t.client_token.uuid == request_client_token_uuid and t.uuid == yggt)
     except (jwt.exceptions.DecodeError, ValueError):
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid token"
         }), 403
 
-    if len(access_tokens) != 1:
+    if access_token is None:
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid token."
         }), 403
 
     new_access_token = AccessToken(
-        account=access_tokens[0].account,
-        client_token=access_tokens[0].client_token,
-        profile=access_tokens[0].profile
+        account=access_token.account,
+        client_token=access_token.client_token,
+        profile=access_token.profile
     )
 
-    access_tokens[0].delete()
+    access_token.delete()
 
     response_data = {
         "accessToken": jwt.encode(new_access_token.format(), key="").decode(),
