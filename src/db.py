@@ -221,6 +221,17 @@ class Profile(db.Entity):
         )
         return new_profile
 
+    @staticmethod
+    def get_profile_with_name(name):
+        """Get profile with case-insensitive name
+
+        :param name: Case-insensitive name
+        :rtype: Profile or None
+        """
+        return Profile.get(lambda x: x.name == name
+                           or x.name_upper == name.upper()
+                           or x.name_lower == name.lower())
+
     def __init__(self, *args, **kwargs):
         if "name_upper" not in kwargs:
             kwargs["name_upper"] = kwargs["name"].upper()
