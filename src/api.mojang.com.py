@@ -5,6 +5,7 @@ from flask import Flask, request
 import handler.api.username_and_time_to_uuid
 import handler.api.uuid_to_name_history
 import handler.api.multiple_usernames_to_uuids
+import handler.api.change_skin
 import handler.api.xerror_404
 import handler.api.xerror_405
 
@@ -17,6 +18,7 @@ args = parser.parse_args()
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 16*1024  # 16 kB
 
 
 @app.errorhandler(404)
@@ -42,6 +44,11 @@ def http_uuid_to_name_history(uuid):
 @app.route("/profiles/minecraft", methods=["POST"])
 def http_multple_usernames_to_uuids():
     return handler.api.multiple_usernames_to_uuids.json_and_response_code(request)
+
+
+@app.route("/user/profile/<uuid>/skin", methods=["POST", "PUT", "DELETE"])
+def http_change_skin(uuid):
+    return handler.api.change_skin.json_and_response_code(request, uuid)
 
 
 app.run(host=args.host, port=args.port, debug=args.debug)

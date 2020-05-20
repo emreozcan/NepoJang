@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
+import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
+
+from paths import DB_PATH, SKINS_ROOT
 
 set_sql_debug(False)
 db = Database()
@@ -29,9 +32,46 @@ class Profile(db.Entity):
     account = Required(Account)
     access_tokens = Set('AccessToken')
     profile_name_events = Set('ProfileNameEvent')
-    name = Required(str, unique=True)  # ign
-    name_upper = Required(str, unique=True, column="name_upper")
-    name_lower = Required(str, unique=True, column="name_lower")
+    name = Required(str, unique=True)
+    name_upper = Required(str, unique=True)
+    name_lower = Required(str, unique=True)
+    profile_skin = Optional('ProfileSkin')
+    profile_cape = Optional('ProfileCape')
+
+    def skin_delete(self):
+        """Delete ProfileSkin and corresponding file.
+
+        Does not raise FileNotFoundError if file was not found.
+        Safe to call whether or not there's a ProfileSkin attached.
+        """
+        if self.profile_skin is not None:
+            try:
+                SKINS_ROOT.joinpath(self.profile_skin.name).unlink()
+            except FileNotFoundError:
+                pass
+            self.profile_skin.delete()
+
+    def skin_update(self, image, model):
+        """Create or update skin and corresponding file.
+
+        :param PIL.Image.Image image: 64x32 or 64x64 PNG Image
+        :param str model: "" for Classic, "slim" for Slim
+        :raise ValueError: If image isn't PNG or the right size.
+        :return: Newly created ProfileSkin
+        :rtype: ProfileSkin
+        """
+        if image.format != "PNG":
+            raise ValueError(f"Image must be in PNG format. It is {image.format}")
+
+        width, height = image.size
+        if width != 64 or height not in [32, 64]:
+            raise ValueError(f"Image size must be either (64, 32) or (64, 64) It is {image.size}")
+
+        self.skin_delete()
+
+        profile_skin = ProfileSkin(profile=self, model=model)
+        image.save(SKINS_ROOT.joinpath(profile_skin.name), format="PNG")
+        return profile_skin
 
     def set_name_and_styles(self, new_name):
         """Set profile name without modifying history.
@@ -288,6 +328,33 @@ class AccessToken(db.Entity):
             data["spr"] = self.profile.uuid.hex
         return data
 
+    @staticmethod
+    def from_token(token):
+        """Get AccessToken from token string
+
+        :param token: JWT encoded token or token UUID string, either dashed or not, or UUID object
+        :type token: UUID or str
+        :rtype: AccessToken or None
+        """
+        if type(token) == str:
+            try:
+                uuid_object = UUID(token)
+            except ValueError:  # token is invalid UUID, may be JWT
+                try:
+                    jwt_decoded = jwt.decode(token, verify=False)
+                    uuid_object = UUID(jwt_decoded["yggt"])
+                except (jwt.exceptions.DecodeError, ValueError):
+                    return None
+                else:
+                    return AccessToken.get(uuid=uuid_object)
+            else:  # token is valid UUID
+                return AccessToken.get(uuid=uuid_object)
+
+        elif type(token) == UUID:
+            return AccessToken.get(uuid=token)
+
+        return None
+
     def __repr__(self):
         return f"{self.id}, {self.uuid}, {'valid' if self.authentication_valid else 'invalid'}, " \
                f"{self.created_utc} to {self.expiry_utc}, by {self.issuer}, {self.client_token.id}, " \
@@ -347,5 +414,18 @@ class ProfileNameEvent(db.Entity):
         return repr(self)
 
 
-db.bind(provider="sqlite", filename="tmp.sqlite3", create_db=True)
+class ProfileSkin(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
+    profile = Required(Profile)
+    model = Optional(str)  # "" or None if Steve, "slim" if Alex.
+
+
+class ProfileCape(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
+    profile = Required(Profile)
+
+
+db.bind(provider="sqlite", filename=str(DB_PATH), create_db=True)
 db.generate_mapping(create_tables=True)

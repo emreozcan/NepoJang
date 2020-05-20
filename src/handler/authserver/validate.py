@@ -1,12 +1,9 @@
-from json import loads, decoder
 from uuid import UUID
 from flask import jsonify
 
-import jwt
 from pony.orm import db_session
 
 from db import AccessToken, ClientToken
-from handler.authserver._jwt_access_token import read_yggt
 
 
 @db_session
@@ -17,15 +14,7 @@ def json_and_response_code(request):
             "errorMessage": "Access Token can not be null or empty."
         }), 400
 
-    try:
-        yggt = UUID(read_yggt(request.json["accessToken"]))
-        access_token = AccessToken.get(lambda t: t.uuid == yggt)
-    except (jwt.exceptions.DecodeError, ValueError):
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid token"
-        }), 403
-
+    access_token = AccessToken.from_token(request.json["accessToken"])
     if access_token is None:
         return jsonify({
             "error": "ForbiddenOperationException",

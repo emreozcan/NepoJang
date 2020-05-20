@@ -1,5 +1,4 @@
-src/tmp.sqlite3
-src/tmp.sqlite3-journal
+data/
 
 .idea/
 

@@ -1,11 +1,8 @@
-from json import loads, decoder
-from uuid import UUID
 from flask import jsonify
 
 import jwt
 from pony.orm import db_session
 
-from handler.authserver._jwt_access_token import read_yggt
 from db import AccessToken
 
 
@@ -29,20 +26,11 @@ def json_and_response_code(request):
             "errorMessage": "Access token already has a profile assigned."
         }), 400
 
-    try:
-        yggt = UUID(read_yggt(request.json["accessToken"]))
-        request_client_token_uuid = UUID(request.json["clientToken"])
-        access_token = AccessToken.get(lambda t: t.client_token.uuid == request_client_token_uuid and t.uuid == yggt)
-    except (jwt.exceptions.DecodeError, ValueError):
+    access_token = AccessToken.from_token(request.json["accessToken"])
+    if access_token is None or access_token.client_token.uuid.hex != request.json["clientToken"]:
         return jsonify({
             "error": "ForbiddenOperationException",
             "errorMessage": "Invalid token"
-        }), 403
-
-    if access_token is None:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid token."
         }), 403
 
     new_access_token = AccessToken(
