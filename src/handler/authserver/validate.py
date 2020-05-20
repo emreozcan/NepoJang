@@ -28,7 +28,7 @@ def json_and_response_code(request):
         except ValueError:
             client_token = None
 
-        if client_token is None:
+        if client_token is None or client_token != access_token.client_token:
             return jsonify({
                 "error": "ForbiddenOperationException",
                 "errorMessage": "Invalid token"

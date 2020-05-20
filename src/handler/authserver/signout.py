@@ -1,4 +1,3 @@
-from json import loads, decoder
 from flask import jsonify
 from pony.orm import db_session
 

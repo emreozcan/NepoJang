@@ -12,7 +12,7 @@ def json_and_response_code(request, username):
         at = datetime.utcnow()
     else:
         try:
-            at = datetime.fromtimestamp(int(request.args["at"]))
+            at = datetime.utcfromtimestamp(int(request.args["at"]))
         except (ValueError, OSError):
             return jsonify({
                 "error": "IllegalArgumentException",

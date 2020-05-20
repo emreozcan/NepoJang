@@ -7,8 +7,7 @@ import handler.authserver.refresh
 import handler.authserver.validate
 import handler.authserver.signout
 import handler.authserver.invalidate
-import handler.authserver.xerror_404
-import handler.authserver.xerror_405
+import handler.error
 
 parser = argparse.ArgumentParser()
 parser.add_argument("host")
@@ -19,16 +18,22 @@ args = parser.parse_args()
 
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 8*1024  # 8 kB
 
 
 @app.errorhandler(404)
 def http_404(e):
-    return handler.authserver.xerror_404.json_and_response_code()
+    return handler.error.http_error_404()
 
 
 @app.errorhandler(405)
 def http_405(e):
-    return handler.authserver.xerror_405.json_and_response_code()
+    return handler.error.http_error_405()
+
+
+# @app.errorhandler(500)
+# def http_500(e):
+#     return handler.error.unhandled_server_error_500()
 
 
 @app.route("/authenticate", methods=["POST"])

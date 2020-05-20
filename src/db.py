@@ -15,8 +15,10 @@ class Account(db.Entity):
     uuid = Required(UUID, unique=True, default=uuid4)
     username = Required(str, unique=True)  # login information, or email
     password = Required(str)  # hashed password
+
     profiles = Set('Profile')  # official Mojang api supports 1 profile but multiple may be supported in the future
     client_tokens = Set('ClientToken')
+    trusted_ips = Set('TrustedIP')
 
     def __repr__(self):
         return f"{self.id}, {self.username}, {self.uuid}"
@@ -25,16 +27,28 @@ class Account(db.Entity):
         return repr(self)
 
 
+class TrustedIP(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    account = Required(Account)
+    address = Required(str)
+
+    created_utc = Required(datetime, default=datetime.utcnow)
+    expiry_utc = Required(datetime, default=lambda: datetime.utcnow()+timedelta(days=14))
+
+
 class Profile(db.Entity):
     id = PrimaryKey(int, auto=True)
     uuid = Required(UUID, unique=True, default=uuid4)
-    agent = Required(str)
     account = Required(Account)
+    agent = Required(str)
+
     access_tokens = Set('AccessToken')
     profile_name_events = Set('ProfileNameEvent')
+
     name = Required(str, unique=True)
     name_upper = Required(str, unique=True)
     name_lower = Required(str, unique=True)
+
     profile_skin = Optional('ProfileSkin')
     profile_cape = Optional('ProfileCape')
 
@@ -72,6 +86,36 @@ class Profile(db.Entity):
         profile_skin = ProfileSkin(profile=self, model=model)
         image.save(SKINS_ROOT.joinpath(profile_skin.name), format="PNG")
         return profile_skin
+
+    def get_texture_data(self) -> dict:
+        """Get texture data
+
+        The keys used will be in the format the clients are expecting.
+
+        :return: B64 encoding ready dict
+        """
+        data = {
+            "timestamp": int(datetime.utcnow().timestamp()*1000),
+            "profileId": self.uuid.hex,
+            "profileName": self.name,
+            # "signatureRequired": False,  # todo?
+            "textures": {
+
+            }
+        }
+        if self.profile_skin is not None:
+            data["textures"]["SKIN"] = {
+                "url": self.profile_skin.name  # todo
+            }
+            if self.profile_skin.model == "slim":
+                # WHO CAME UP WITH THIS FORMAT? WHAT IS THIS???
+                data["textures"]["SKIN"]["metadata"] = {"model": "slim"}
+        if self.profile_cape is not None:
+            data["textures"]["CAPE"] = {
+                "url": self.profile_cape.name  # todo
+            }
+
+        return data
 
     def set_name_and_styles(self, new_name):
         """Set profile name without modifying history.
@@ -292,6 +336,20 @@ class ClientToken(db.Entity):
     account = Required(Account)  # which account does this client token authorize
     access_tokens = Set('AccessToken')
 
+    created_utc = Required(datetime, default=datetime.utcnow)
+    expiry_utc = Required(datetime, default=lambda: datetime.utcnow()+timedelta(days=30))
+
+    def refresh(self, days=30) -> datetime:
+        """Add days to expiry_utc
+
+        New expiry date will be "now+days"
+
+        :param int days: Amount of days to add to today
+        :return: Naive UTC datetime of "days" days later.
+        """
+        self.expiry_utc = datetime.utcnow()+timedelta(days=days)
+        return self.expiry_utc
+
     def __repr__(self):
         return f"{self.id}, {self.uuid}, related {self.access_tokens.count()} AccessTokens " \
                f"-of> {self.account.id}, {self.account.username}"
@@ -304,11 +362,24 @@ class AccessToken(db.Entity):
     id = PrimaryKey(int, auto=True)
     uuid = Required(UUID, unique=True, default=uuid4)
     issuer = Required(str, default="Yggdrasil-Auth")
+    client_token = Required(ClientToken)  # client that created this access token
+
+    authentication_valid = Required(bool, default=True)  # is access token valid for authenticating with game servers
+    profile = Optional(Profile)  # which profile can this access token grants access to
+
     created_utc = Required(datetime, default=datetime.utcnow)
     expiry_utc = Required(datetime, default=lambda: datetime.utcnow()+timedelta(days=2))
-    authentication_valid = Required(bool, default=True)  # is access token valid for authenticating with game servers
-    client_token = Required(ClientToken)  # client that created this access token
-    profile = Optional(Profile)  # which profile can this access token grants access to
+
+    def refresh(self, days=2) -> datetime:
+        """Add days to expiry_utc
+
+        New expiry date will be "now+days"
+
+        :param int days: Amount of days to add to today
+        :return: Naive UTC datetime of "days" days later.
+        """
+        self.expiry_utc = datetime.utcnow()+timedelta(days=days)
+        return self.expiry_utc
 
     def format(self) -> dict:
         """Format self to respond to the client.
@@ -368,7 +439,9 @@ class AccessToken(db.Entity):
 class ProfileNameEvent(db.Entity):
     id = PrimaryKey(int, auto=True)
     profile = Required(Profile)
+
     active_from = Required(datetime, default=datetime.utcnow)
+
     name = Required(str)
     name_upper = Required(str)
     name_lower = Required(str)
@@ -416,15 +489,17 @@ class ProfileNameEvent(db.Entity):
 
 class ProfileSkin(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
     profile = Required(Profile)
+
+    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
     model = Optional(str)  # "" or None if Steve, "slim" if Alex.
 
 
 class ProfileCape(db.Entity):
     id = PrimaryKey(int, auto=True)
-    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
     profile = Required(Profile)
+
+    name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
 
 
 db.bind(provider="sqlite", filename=str(DB_PATH), create_db=True)

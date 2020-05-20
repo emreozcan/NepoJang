@@ -21,7 +21,7 @@ def json_and_response_code(request):
         }), 400
 
     if "selectedProfile" in request.json:
-        return jsonify({
+        return jsonify({  # This will always be true until multiple profiles per account is implemented.
             "error": "IllegalArgumentException",
             "errorMessage": "Access token already has a profile assigned."
         }), 400
