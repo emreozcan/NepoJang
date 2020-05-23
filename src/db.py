@@ -87,7 +87,7 @@ class Profile(db.Entity):
         image.save(SKINS_ROOT.joinpath(profile_skin.name), format="PNG")
         return profile_skin
 
-    def get_texture_data(self) -> dict:
+    def get_texture_data(self, textures_host) -> dict:
         """Get texture data
 
         The keys used will be in the format the clients are expecting.
@@ -105,14 +105,14 @@ class Profile(db.Entity):
         }
         if self.profile_skin is not None:
             data["textures"]["SKIN"] = {
-                "url": self.profile_skin.name  # todo
+                "url": f"http://{textures_host}/texture/{self.profile_skin.name}"
             }
             if self.profile_skin.model == "slim":
                 # WHO CAME UP WITH THIS FORMAT? WHAT IS THIS???
                 data["textures"]["SKIN"]["metadata"] = {"model": "slim"}
         if self.profile_cape is not None:
             data["textures"]["CAPE"] = {
-                "url": self.profile_cape.name  # todo
+                "url": f"http://{textures_host}/texture/{self.profile_cape.name}"
             }
 
         return data

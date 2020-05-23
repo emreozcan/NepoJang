@@ -12,6 +12,7 @@ import handler.authserver.validate
 import handler.authserver.signout
 import handler.authserver.invalidate
 import handler.sessionserver.get_skin_cape
+import handler.textures.get_texture
 import handler.error
 
 
@@ -89,11 +90,17 @@ def call(program, argv):
     # region Sessionserver
     @app.route("/session/minecraft/profile/<uuid>", methods=["GET"], host=args.sessionserver_host)
     def http_get_skin_cape(uuid):
-        return handler.sessionserver.get_skin_cape.json_and_response_code(request, uuid)
+        return handler.sessionserver.get_skin_cape.json_and_response_code(request, uuid, args.textures_host)
 
     @app.route("/blockedservers", methods=["GET"], host=args.sessionserver_host)
     def http_get_blocked_servers():
         return "", 200
+    # endregion
+
+    # region Textures
+    @app.route("/texture/<name>", methods=["GET"], host=args.textures_host)
+    def http_get_texture(name):
+        return handler.textures.get_texture.json_and_response_code(request, name)
     # endregion
 
     app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded)

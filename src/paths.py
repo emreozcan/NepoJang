@@ -11,14 +11,14 @@ except FileExistsError:
 
 DB_PATH = DATA_ROOT.joinpath("tmp.sqlite3")
 
-MEDIA_ROOT = DATA_ROOT.joinpath("media")
+TEXTURES_ROOT = DATA_ROOT.joinpath("textures")
 
 try:
-    MEDIA_ROOT.mkdir()
+    TEXTURES_ROOT.mkdir()
 except FileExistsError:
     pass
 
-SKINS_ROOT = MEDIA_ROOT.joinpath("skins")
+SKINS_ROOT = TEXTURES_ROOT.joinpath("skins")
 
 try:
     SKINS_ROOT.mkdir()

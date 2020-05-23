@@ -27,6 +27,8 @@ def set_skin(readable, model, profile: Profile):
             "errorMessage": "Provided skin is not valid."
         }), 400
 
+    return "", 204
+
 
 @db_session
 def json_and_response_code(request: Request, uuid):
@@ -79,3 +81,6 @@ def json_and_response_code(request: Request, uuid):
 
     elif request.method == "DELETE":
         profile.skin_delete()
+        return "", 204
+
+    return "", 204

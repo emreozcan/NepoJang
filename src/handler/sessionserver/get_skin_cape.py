@@ -9,7 +9,7 @@ from db import Profile
 
 
 @db_session
-def json_and_response_code(request, uuid):
+def json_and_response_code(request, uuid, textures_host):
     try:
         uuid_object = UUID(uuid)
     except ValueError:
@@ -25,7 +25,7 @@ def json_and_response_code(request, uuid):
         "properties": [
             {
                 "name": "textures",  # Who puts a "name" field in a list member? Just make a dict!
-                "value": b64encode(dumps(profile.get_texture_data()).encode("utf-8")).decode("utf-8"),
+                "value": b64encode(dumps(profile.get_texture_data(textures_host)).encode("utf-8")).decode("utf-8"),
                 # "signature": ""  # todo?
             }
         ]

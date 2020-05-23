@@ -24,18 +24,18 @@ def json_and_response_code(request):
             "errorMessage": "Invalid credentials. Invalid username or password."
         }), 403
 
-    try:
-        client_token_uuid = UUID(request.json["clientToken"])
-    except ValueError as e:
-        return jsonify({
-            "error": "IllegalArgumentException",
-            "errorMessage": "Invalid token."
-        }), 400
-
     client_token: ClientToken
     if "clientToken" not in request.json:
         client_token = ClientToken(account=account)
     else:
+        try:
+            client_token_uuid = UUID(request.json["clientToken"])
+        except ValueError as e:
+            return jsonify({
+                "error": "IllegalArgumentException",
+                "errorMessage": "Invalid token."
+            }), 400
+
         client_token = ClientToken.get(uuid=client_token_uuid)
         if client_token is not None and client_token.account != account:  # requested clientToken is different account's
             return jsonify({  # May be inconsistent with official API
