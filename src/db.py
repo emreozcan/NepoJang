@@ -49,8 +49,8 @@ class Profile(db.Entity):
     name_upper = Required(str, unique=True)
     name_lower = Required(str, unique=True)
 
-    profile_skin = Optional('ProfileSkin')
-    profile_cape = Optional('ProfileCape')
+    profile_skin = Optional('ProfileSkin', cascade_delete=True)
+    profile_cape = Optional('ProfileCape', cascade_delete=True)
 
     def skin_delete(self):
         """Delete ProfileSkin and corresponding file.
@@ -59,10 +59,6 @@ class Profile(db.Entity):
         Safe to call whether or not there's a ProfileSkin attached.
         """
         if self.profile_skin is not None:
-            try:
-                SKINS_ROOT.joinpath(self.profile_skin.name).unlink()
-            except FileNotFoundError:
-                pass
             self.profile_skin.delete()
 
     def skin_update(self, image, model):
@@ -493,6 +489,9 @@ class ProfileSkin(db.Entity):
 
     name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
     model = Optional(str)  # "" or None if Steve, "slim" if Alex.
+
+    def before_delete(self):
+        SKINS_ROOT.joinpath(self.name).unlink()
 
 
 class ProfileCape(db.Entity):

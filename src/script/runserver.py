@@ -35,11 +35,11 @@ def call(program, argv):
 
     # region Common
     @app.errorhandler(404)
-    def http_404(e):
+    def http_404(_):
         return handler.error.http_error_404()
 
     @app.errorhandler(405)
-    def http_405(e):
+    def http_405(_):
         return handler.error.http_error_405()
 
     # @app.errorhandler(500)
