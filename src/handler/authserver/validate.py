@@ -1,25 +1,19 @@
 from uuid import UUID
-from flask import jsonify
 
 from pony.orm import db_session
 
+from constant.error import NULL_ACCESS_TOKEN, INVALID_TOKEN
 from db import AccessToken, ClientToken
 
 
 @db_session
 def json_and_response_code(request):
     if "accessToken" not in request.json:
-        return jsonify({
-            "error": "IllegalArgumentException",
-            "errorMessage": "Access Token can not be null or empty."
-        }), 400
+        return NULL_ACCESS_TOKEN.dual
 
     access_token = AccessToken.from_token(request.json["accessToken"])
     if access_token is None:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid token"
-        }), 403
+        return INVALID_TOKEN.dual
 
     if "clientToken" in request.json:
         try:
@@ -29,15 +23,9 @@ def json_and_response_code(request):
             client_token = None
 
         if client_token is None or client_token != access_token.client_token:
-            return jsonify({
-                "error": "ForbiddenOperationException",
-                "errorMessage": "Invalid token"
-            }), 403
+            return INVALID_TOKEN.dual
 
     if not access_token.authentication_valid:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid token"
-        }), 403
+        return INVALID_TOKEN.dual
 
     return "", 204

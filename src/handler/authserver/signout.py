@@ -1,6 +1,6 @@
-from flask import jsonify
 from pony.orm import db_session
 
+from constant.error import INVALID_CREDENTIALS, INVALID_CREDENTIALS_RATE_LIMIT
 from db import AccessToken
 from handler.authserver._username_password_verify import account_or_none
 
@@ -8,17 +8,11 @@ from handler.authserver._username_password_verify import account_or_none
 @db_session
 def json_and_response_code(request):
     if "username" not in request.json or "password" not in request.json:
-        return jsonify({
-            "error": "TooManyRequestsException",
-            "errorMessage": "Invalid credentials. Invalid username or password."
-        }), 429
+        return INVALID_CREDENTIALS_RATE_LIMIT.dual
 
     account = account_or_none(request.json["username"], request.json["password"])
     if account is None:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid credentials. Invalid username or password."
-        }), 403
+        return INVALID_CREDENTIALS.dual
 
     AccessToken.select(lambda tkn: tkn.client_token.account == account).delete()
 

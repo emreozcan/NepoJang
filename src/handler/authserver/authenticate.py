@@ -5,6 +5,7 @@ from flask import jsonify
 import jwt
 from pony.orm import db_session
 
+from constant.error import INVALID_CREDENTIALS, INVALID_TOKEN, NULL_MESSAGE
 from db import ClientToken, Profile, AccessToken
 from handler.authserver._username_password_verify import account_or_none
 
@@ -12,36 +13,21 @@ from handler.authserver._username_password_verify import account_or_none
 @db_session
 def json_and_response_code(request):
     if "username" not in request.json or "password" not in request.json:
-        return jsonify({
-            "error": "IllegalArgumentException",
-            "errorMessage": "message is marked non-null but is null"
-        }), 400
+        return NULL_MESSAGE.dual
 
     account = account_or_none(request.json["username"], request.json["password"])
     if account is None:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid credentials. Invalid username or password."
-        }), 403
+        return INVALID_CREDENTIALS.dual
 
     client_token: ClientToken
     if "clientToken" not in request.json:
         client_token = ClientToken(account=account)
     else:
-        try:
-            client_token_uuid = UUID(request.json["clientToken"])
-        except ValueError as e:
-            return jsonify({
-                "error": "IllegalArgumentException",
-                "errorMessage": "Invalid token."
-            }), 400
 
         client_token = ClientToken.get(uuid=client_token_uuid)
         if client_token is not None and client_token.account != account:  # requested clientToken is different account's
-            return jsonify({  # May be inconsistent with official API
-                "error": "ForbiddenOperationException",
-                "errorMessage": "Invalid credentials. Invalid username or password."
-            }), 403
+            # May be inconsistent with official API
+            return INVALID_CREDENTIALS.dual
 
         elif client_token is None:  # there's no client token with requested UUID
             client_token = ClientToken(account=account, uuid=client_token_uuid)

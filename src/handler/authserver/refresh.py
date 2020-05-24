@@ -3,35 +3,25 @@ from flask import jsonify
 import jwt
 from pony.orm import db_session
 
+from constant.error import INVALID_TOKEN, NULL_CLIENT_TOKEN, NULL_ACCESS_TOKEN, PROFILE_ALREADY_ASSIGNED
 from db import AccessToken
 
 
 @db_session
 def json_and_response_code(request):
     if "clientToken" not in request.json or request.json["clientToken"] is None:
-        return jsonify({
-            "error": "IllegalArgumentException",
-            "errorMessage": "Missing clientToken."
-        }), 403
+        return NULL_CLIENT_TOKEN.dual
 
     if "accessToken" not in request.json or request.json["accessToken"] is None:
-        return jsonify({
-            "error": "IllegalArgumentException",
-            "errorMessage": "Access Token can not be null or empty."
-        }), 400
+        return NULL_ACCESS_TOKEN.dual
 
     if "selectedProfile" in request.json:
-        return jsonify({  # This will always be true until multiple profiles per account is implemented.
-            "error": "IllegalArgumentException",
-            "errorMessage": "Access token already has a profile assigned."
-        }), 400
+        # This will always be correct until multiple profiles per account is implemented.
+        return PROFILE_ALREADY_ASSIGNED.dual
 
     access_token = AccessToken.from_token(request.json["accessToken"])
     if access_token is None or access_token.client_token.uuid.hex != request.json["clientToken"]:
-        return jsonify({
-            "error": "ForbiddenOperationException",
-            "errorMessage": "Invalid token"
-        }), 403
+        return INVALID_TOKEN.dual
 
     new_access_token = AccessToken(
         client_token=access_token.client_token,

@@ -134,7 +134,7 @@ class Profile(db.Entity):
         Use Profile.name_change_is_allowed() and Profile.name_available_for_change() for that.
 
         :param str new_name_attempt: New profile name
-        :raise pony.orm.dbapiprovider.IntegityError: While commiting to the database if the profile name was taken
+        :raise pony.orm.dbapiprovider.IntegityError: While committing to the database if the profile name was taken
         """
         self.set_name_and_styles(new_name_attempt)
         ProfileNameEvent(
