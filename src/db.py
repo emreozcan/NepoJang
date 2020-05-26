@@ -27,7 +27,7 @@ class Account(db.Entity):
         return repr(self)
 
 
-class TrustedIP(db.Entity):
+class TrustedIP(db.Entity):  # todo Unused
     id = PrimaryKey(int, auto=True)
     account = Required(Account)
     address = Required(str)
@@ -75,7 +75,7 @@ class Profile(db.Entity):
 
         width, height = image.size
         if width != 64 or height not in [32, 64]:
-            raise ValueError(f"Image size must be either (64, 32) or (64, 64) It is {image.size}")
+            raise ValueError(f"Image size must be either (64, 32) or (64, 64). It is {image.size}")
 
         self.skin_delete()
 
@@ -403,7 +403,7 @@ class AccessToken(db.Entity):
         :type token: UUID or str
         :rtype: AccessToken or None
         """
-        if type(token) == str:
+        if isinstance(token, str):
             try:
                 uuid_object = UUID(token)
             except ValueError:  # token is invalid UUID, may be JWT
@@ -417,7 +417,7 @@ class AccessToken(db.Entity):
             else:  # token is valid UUID
                 return AccessToken.get(uuid=uuid_object)
 
-        elif type(token) == UUID:
+        elif isinstance(token, UUID):
             return AccessToken.get(uuid=token)
 
         return None
@@ -494,7 +494,7 @@ class ProfileSkin(db.Entity):
         SKINS_ROOT.joinpath(self.name).unlink()
 
 
-class ProfileCape(db.Entity):
+class ProfileCape(db.Entity):  # todo Unused
     id = PrimaryKey(int, auto=True)
     profile = Required(Profile)
 

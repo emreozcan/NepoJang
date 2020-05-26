@@ -44,7 +44,7 @@ def json_and_response_code(request: Request, uuid):
     except ValueError:
         # May be inconsistent with official API
         return INVALID_UUID.dual
-    
+
     profile: Profile = Profile.get(uuid=uuid_object)
     if profile is None or profile.account != token.client_token.account:
         # May be inconsistent with official API

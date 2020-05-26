@@ -23,6 +23,10 @@ def json_and_response_code(request):
     if "clientToken" not in request.json:
         client_token = ClientToken(account=account)
     else:
+        try:
+            client_token_uuid = UUID(request.json["clientToken"])
+        except ValueError:
+            return INVALID_TOKEN.dual
 
         client_token = ClientToken.get(uuid=client_token_uuid)
         if client_token is not None and client_token.account != account:  # requested clientToken is different account's
