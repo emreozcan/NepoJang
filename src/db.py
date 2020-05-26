@@ -52,7 +52,7 @@ class Profile(db.Entity):
     profile_skin = Optional('ProfileSkin', cascade_delete=True)
     profile_cape = Optional('ProfileCape', cascade_delete=True)
 
-    def skin_delete(self):
+    def reset_skin(self):
         """Delete ProfileSkin and corresponding file.
 
         Does not raise FileNotFoundError if file was not found.
@@ -61,7 +61,7 @@ class Profile(db.Entity):
         if self.profile_skin is not None:
             self.profile_skin.delete()
 
-    def skin_update(self, image, model):
+    def update_skin(self, image, model):
         """Create or update skin and corresponding file.
 
         :param PIL.Image.Image image: 64x32 or 64x64 PNG Image
@@ -77,13 +77,13 @@ class Profile(db.Entity):
         if width != 64 or height not in [32, 64]:
             raise ValueError(f"Image size must be either (64, 32) or (64, 64). It is {image.size}")
 
-        self.skin_delete()
+        self.reset_skin()
 
         profile_skin = ProfileSkin(profile=self, model=model)
         image.save(SKINS_ROOT.joinpath(profile_skin.name), format="PNG")
         return profile_skin
 
-    def cape_delete(self):
+    def reset_cape(self):
         """Delete ProfileCape and corresponding file.
 
         Does not raise FileNotFoundError if file was not found.
@@ -92,7 +92,7 @@ class Profile(db.Entity):
         if self.profile_cape is not None:
             self.profile_cape.delete()
 
-    def cape_update(self, image):
+    def update_cape(self, image):
         """Create or update cape and corresponding file.
 
         :param PIL.Image.Image image: 64x32 PNG Image
@@ -107,7 +107,7 @@ class Profile(db.Entity):
         if width != 64 or height != 32:
             raise ValueError(f"Image size must be (64, 32). It is {image.size}")
 
-        self.cape_delete()
+        self.reset_cape()
 
         profile_cape = ProfileCape(profile=self)
         image.save(CAPES_ROOT.joinpath(profile_cape.name), format="PNG")
@@ -429,8 +429,7 @@ class AccessToken(db.Entity):
     def from_token(token):
         """Get AccessToken from token string
 
-        :param token: JWT encoded token or token UUID string, either dashed or not, or UUID object
-        :type token: UUID or str
+        :param UUID or str token: JWT encoded token or token UUID string, either dashed or not, or UUID object
         :rtype: AccessToken or None
         """
         if isinstance(token, str):
@@ -524,7 +523,7 @@ class ProfileSkin(db.Entity):
         SKINS_ROOT.joinpath(self.name).unlink()
 
 
-class ProfileCape(db.Entity):  # todo Unused
+class ProfileCape(db.Entity):
     id = PrimaryKey(int, auto=True)
     profile = Required(Profile)
 

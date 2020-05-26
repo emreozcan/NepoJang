@@ -19,7 +19,7 @@ def set_skin(readable, model, profile: Profile):
         return INVALID_IMAGE.dual
 
     try:
-        profile.skin_update(image, model)
+        profile.update_skin(image, model)
     except ValueError:
         # May be inconsistent with official API
         return INVALID_SKIN.dual
@@ -65,7 +65,7 @@ def json_and_response_code(request: Request, uuid):
         return set_skin(request.files["file"].stream, request.form["model"], profile)
 
     elif request.method == "DELETE":
-        profile.skin_delete()
+        profile.reset_skin()
         return "", 204
 
     return "", 204

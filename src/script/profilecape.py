@@ -38,7 +38,7 @@ def call(program, argv):
         exit(1)
 
     if args.delete:
-        profile.cape_delete()
+        profile.reset_cape()
     else:
         try:
             image: Image = Image.open(fd)
@@ -47,7 +47,7 @@ def call(program, argv):
             exit(1)
 
         try:
-            profile.cape_update(image)
+            profile.update_cape(image)
         except ValueError:
             print(INVALID_SKIN.message)
             exit(1)

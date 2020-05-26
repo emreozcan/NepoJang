@@ -40,7 +40,7 @@ def call(program, argv):
         exit(1)
 
     if args.delete:
-        profile.skin_delete()
+        profile.reset_skin()
     else:
         try:
             image: Image = Image.open(fd)
@@ -49,7 +49,7 @@ def call(program, argv):
             exit(1)
 
         try:
-            profile.skin_update(image, "slim" if args.slim else "")
+            profile.update_skin(image, "slim" if args.slim else "")
         except ValueError:
             print(INVALID_SKIN.message)
             exit(1)
