@@ -18,11 +18,9 @@ def call(program, argv):
     parser.add_argument("dbid", help="DBID of profile", type=int)
 
     sources = parser.add_mutually_exclusive_group(required=True)
-    sources.add_argument("-u", "--url", help="url of skin", dest="url")
-    sources.add_argument("-f", help="file path of skin", dest="path")
+    sources.add_argument("-u", "--url", help="url of cape", dest="url")
+    sources.add_argument("-f", help="file path of cape", dest="path")
     sources.add_argument("--delete", help="reset profile skin", action="store_true")
-
-    parser.add_argument("--slim", help="slim model", action="store_true")
 
     args = parser.parse_args(argv)
 
@@ -40,7 +38,7 @@ def call(program, argv):
         exit(1)
 
     if args.delete:
-        profile.skin_delete()
+        profile.cape_delete()
     else:
         try:
             image: Image = Image.open(fd)
@@ -49,7 +47,7 @@ def call(program, argv):
             exit(1)
 
         try:
-            profile.skin_update(image, "slim" if args.slim else "")
+            profile.cape_update(image)
         except ValueError:
             print(INVALID_SKIN.message)
             exit(1)
@@ -61,4 +59,4 @@ def call(program, argv):
         exit(1)
 
     if not args.delete:
-        print(f"Texture name: {profile.profile_skin.name}")
+        print(f"Texture name: {profile.profile_cape.name}")

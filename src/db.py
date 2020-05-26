@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
-from paths import DB_PATH, SKINS_ROOT
+from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
 
 set_sql_debug(False)
 db = Database()
@@ -82,6 +82,36 @@ class Profile(db.Entity):
         profile_skin = ProfileSkin(profile=self, model=model)
         image.save(SKINS_ROOT.joinpath(profile_skin.name), format="PNG")
         return profile_skin
+
+    def cape_delete(self):
+        """Delete ProfileCape and corresponding file.
+
+        Does not raise FileNotFoundError if file was not found.
+        Safe to call whether or not there's a ProfileCape attached.
+        """
+        if self.profile_cape is not None:
+            self.profile_cape.delete()
+
+    def cape_update(self, image):
+        """Create or update cape and corresponding file.
+
+        :param PIL.Image.Image image: 64x32 PNG Image
+        :raise ValueError: If image isn't PNG or 64x32
+        :return: Newly created ProfileCape
+        :rtype: ProfileCape
+        """
+        if image.format != "PNG":
+            raise ValueError(f"Image must be in PNG format. It is {image.format}")
+
+        width, height = image.size
+        if width != 64 or height != 32:
+            raise ValueError(f"Image size must be (64, 32). It is {image.size}")
+
+        self.cape_delete()
+
+        profile_cape = ProfileCape(profile=self)
+        image.save(CAPES_ROOT.joinpath(profile_cape.name), format="PNG")
+        return profile_cape
 
     def get_texture_data(self, textures_host) -> dict:
         """Get texture data
@@ -499,6 +529,9 @@ class ProfileCape(db.Entity):  # todo Unused
     profile = Required(Profile)
 
     name = Required(str, unique=True, default=lambda: "".join([uuid4().hex, uuid4().hex]))
+
+    def before_delete(self):
+        CAPES_ROOT.joinpath(self.name).unlink()
 
 
 db.bind(provider="sqlite", filename=str(DB_PATH), create_db=True)

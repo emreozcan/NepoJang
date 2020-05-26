@@ -8,8 +8,15 @@ DB_PATH = DATA_ROOT.joinpath("tmp.sqlite3")
 
 TEXTURES_ROOT = DATA_ROOT.joinpath("textures")
 SKINS_ROOT = TEXTURES_ROOT.joinpath("skins")
+CAPES_ROOT = TEXTURES_ROOT.joinpath("capes")
 
-ROOTS = [PROJECT_ROOT, DATA_ROOT, TEXTURES_ROOT, SKINS_ROOT]
+ROOTS = [
+    PROJECT_ROOT,
+    DATA_ROOT,
+    TEXTURES_ROOT,
+    SKINS_ROOT,
+    CAPES_ROOT,
+]
 
 
 def setup():
