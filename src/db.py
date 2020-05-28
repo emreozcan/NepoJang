@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
-from classes.exceptions import InvalidAuthHeaderException, AuthorizationException
+from classes.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsError
 from constant.security_questions import questions
 from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
 
@@ -23,6 +23,24 @@ class Account(db.Entity):
     client_tokens = Set('ClientToken')
     trusted_ips = Set('TrustedIP')
     security_questions = Set('SecurityQuestion')
+
+    def add_answer(self, question_id: int, answer: str):
+        """Add security question
+
+        :return: Newly created SecurityQuestion
+        :raise ValueError: If a question with an invalid ID was given.
+        :raise ExistsError: If the account already has a question with given ID.
+        :rtype: SecurityQuestion
+        """
+        if question_id not in questions:
+            raise ValueError(f"Invalid question ID {question_id}")
+        if SecurityQuestion.select(lambda x: x.account == self and x.question_id == question_id).count() != 0:
+            raise ExistsError(f"This account already has a question with ID {question_id}.")
+        return SecurityQuestion(
+            account=self,
+            question_id=question_id,
+            answer=answer
+        )
 
     def check_answers(self, answers) -> bool:
         """Check security answers
@@ -94,7 +112,8 @@ class SecurityQuestion(db.Entity):
     answer = Required(str)
 
     def __repr__(self):
-        return f"{questions[self.question_id]} ({self.answer}) -of> {self.account.id}, {self.account.username}"
+        return f"{self.id}, {questions[self.question_id]} ({self.answer}) " \
+               f"-of> {self.account.id}, {self.account.username}"
 
     def __str__(self):
         return repr(self)

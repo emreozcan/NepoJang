@@ -13,3 +13,6 @@ class InvalidAuthHeaderException(AuthorizationException):
 class InvalidTokenException(AuthorizationException):
     pass
 
+
+class ExistsError(NepoJangException):
+    pass

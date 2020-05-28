@@ -3,7 +3,7 @@ from uuid import uuid4, UUID
 
 from pony.orm import db_session, commit
 
-from db import Account, SecurityQuestion
+from db import Account
 from password import password_hash
 
 
@@ -13,12 +13,6 @@ def call(program, argv):
 
     parser.add_argument("username", help="new account's username")
     parser.add_argument("password", help="new account's password")
-    parser.add_argument("q1", help="security question #1 id", type=int)
-    parser.add_argument("a1", help="security answer #1")
-    parser.add_argument("q2", help="security question #2 id", type=int)
-    parser.add_argument("a2", help="security answer #2")
-    parser.add_argument("q3", help="security question #3 id", type=int)
-    parser.add_argument("a3", help="security answer #3")
 
     parser.add_argument("-u", "--uuid",  help="new account's UUID", type=UUID)
 
@@ -31,13 +25,6 @@ def call(program, argv):
         password=password_hash(args.password),
         uuid=input_uuid
     )
-
-    if args.q1 < 1 or args.q1 > 39 or args.q2 < 1 or args.q2 > 39 or args.q3 < 1 or args.q3 > 39:
-        print("Question ID must be between 1 and 39.")
-
-    SecurityQuestion(account=account, question_id=args.q1, answer=args.a1)
-    SecurityQuestion(account=account, question_id=args.q2, answer=args.a2)
-    SecurityQuestion(account=account, question_id=args.q3, answer=args.a3)
 
     try:
         commit()
