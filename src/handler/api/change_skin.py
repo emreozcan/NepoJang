@@ -6,6 +6,7 @@ from flask import Request
 from pony.orm import db_session
 from requests import get
 
+from classes.exceptions import InvalidAuthHeaderException
 from constant.error import INVALID_SKIN, INVALID_UUID, INVALID_TOKEN, AUTH_HEADER_MISSING, MISSING_SKIN, NULL_MESSAGE, \
     INVALID_IMAGE
 from db import AccessToken, Profile
@@ -29,12 +30,10 @@ def set_skin(readable, model, profile: Profile):
 
 @db_session
 def json_and_response_code(request: Request, uuid):
-    auth = request.headers.get("Authorization")
-    if auth is None or not auth.startswith("Bearer ") or auth == "Bearer ":
+    try:
+        token = AccessToken.from_header(request.headers.get("Authorization"))
+    except InvalidAuthHeaderException:
         return AUTH_HEADER_MISSING.dual
-
-    auth = auth[7:]
-    token = AccessToken.from_token(auth)
     if token is None:
         # May be inconsistent with official API
         return INVALID_TOKEN.dual

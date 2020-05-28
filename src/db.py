@@ -4,6 +4,8 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
+from classes.exceptions import InvalidAuthHeaderException, AuthorizationException
+from constant.security_questions import questions
 from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
 
 set_sql_debug(False)
@@ -17,8 +19,65 @@ class Account(db.Entity):
     password = Required(str)  # hashed password
 
     profiles = Set('Profile')  # official Mojang api supports 1 profile but multiple may be supported in the future
+
     client_tokens = Set('ClientToken')
     trusted_ips = Set('TrustedIP')
+    security_questions = Set('SecurityQuestion')
+
+    def check_answers(self, answers) -> bool:
+        """Check security answers
+
+        If an incorrect answer is found, the rest of the questions aren't checked.
+
+        :param list answers: List of {"id": int, "answer": string}
+        :raise AuthorizationException:
+            If incorrect amount of answers was given.
+            If an answer with an invalid question ID was given.
+        :raise KeyError: If an answer has incorrect structure.
+        :return: Whether the answers were true or not
+        """
+        given_answer_count = len(answers)
+        expected_answer_count = self.security_questions.count()
+        if given_answer_count != expected_answer_count:
+            raise AuthorizationException(f"Expected {expected_answer_count} answers, {given_answer_count} given.")
+
+        for answer in answers:
+            question_object = SecurityQuestion.get(id=answer["id"])
+            if question_object is None:
+                raise AuthorizationException(f"There isn't a question object with id {answer['id']}.")
+            if question_object.answer != answer["answer"]:
+                # raise AuthorizationException(f"Incorrect answer \"{answer['answer']}\" for {answer['id']}."
+                #                              f"Correct answer is \"{question_object.answer}\".")
+                # The above exception was disabled because it might accidentally be echoed back to the user.
+                return False
+        return True
+
+    def does_trust_ip(self, address: str) -> bool:
+        """Check if an IP is trusted
+
+        :param str address: IP address to check
+        :return: True if trusted, False if untrusted.
+        """
+        trusted_ip_object = TrustedIP.select(lambda x: x.account == self and x.address == address)
+        if trusted_ip_object.count() < 1:
+            return False
+        return True
+
+    def trust_ip(self, address: str):
+        """Add a new trusted IP to this account.
+
+        If the IP is already trusted, does not do anything and returns None.
+        (Does not refresh the trusted IP's expiration.)
+
+        :param str address: IP address to trust
+        :return: Newly created TrustedIP object
+        :rtype: TrustedIP or None
+        """
+        if not self.does_trust_ip(address):
+            return TrustedIP(
+                account=self,
+                address=address
+            )
 
     def __repr__(self):
         return f"{self.id}, {self.username}, {self.uuid}"
@@ -27,7 +86,21 @@ class Account(db.Entity):
         return repr(self)
 
 
-class TrustedIP(db.Entity):  # todo Unused
+class SecurityQuestion(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    account = Required(Account)
+
+    question_id = Required(int)
+    answer = Required(str)
+
+    def __repr__(self):
+        return f"{questions[self.question_id]} ({self.answer}) -of> {self.account.id}, {self.account.username}"
+
+    def __str__(self):
+        return repr(self)
+
+
+class TrustedIP(db.Entity):
     id = PrimaryKey(int, auto=True)
     account = Required(Account)
     address = Required(str)
@@ -164,7 +237,7 @@ class Profile(db.Entity):
         Use Profile.name_change_is_allowed() and Profile.name_available_for_change() for that.
 
         :param str new_name_attempt: New profile name
-        :raise pony.orm.dbapiprovider.IntegityError: While committing to the database if the profile name was taken
+        :raise pony.orm.dbapiprovider.IntegrityError: While committing to the database if the profile name was taken.
         """
         self.set_name_and_styles(new_name_attempt)
         ProfileNameEvent(
@@ -395,6 +468,19 @@ class AccessToken(db.Entity):
 
     created_utc = Required(datetime, default=datetime.utcnow)
     expiry_utc = Required(datetime, default=lambda: datetime.utcnow()+timedelta(days=2))
+
+    @staticmethod
+    def from_header(header):
+        """Get AccessToken from Authorization Header
+
+        :param str header: HTTP Request Header 'Authorization': 'Bearer <token>'
+        :raise InvalidAuthHeaderException: If Header doesn't start with "Bearer" or is empty.
+        :rtype: AccessToken or None
+        """
+        if header is None or not header.startswith("Bearer ") or header == "Bearer ":
+            raise InvalidAuthHeaderException()
+
+        return AccessToken.from_token(header[7:])
 
     def refresh(self, days=2) -> datetime:
         """Add days to expiry_utc

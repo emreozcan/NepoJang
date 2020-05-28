@@ -6,6 +6,7 @@ import handler.api.get_name_past_owner
 import handler.api.get_name_history
 import handler.api.get_uuids
 import handler.api.change_skin
+import handler.api.security
 import handler.authserver.authenticate
 import handler.authserver.refresh
 import handler.authserver.validate
@@ -63,6 +64,14 @@ def call(program, argv):
     @app.route("/user/profile/<uuid>/skin", methods=["POST", "PUT", "DELETE"], host=args.api_host)
     def http_change_skin(uuid):
         return handler.api.change_skin.json_and_response_code(request, uuid)
+
+    @app.route("/user/security/location", methods=["GET", "POST"], host=args.api_host)
+    def http_security_location():
+        return handler.api.security.location(request)
+
+    @app.route("/user/security/challenges", methods=["GET"], host=args.api_host)
+    def http_security_challenges():
+        return handler.api.security.list_challenges(request)
     # endregion
 
     # region Authserver

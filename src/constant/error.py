@@ -53,3 +53,6 @@ PROFILE_ALREADY_ASSIGNED = Error("IllegalArgumentException", "Access token alrea
 
 MISSING_SKIN = Error("IllegalArgumentException", "Model or skin URL missing.", 400)
 NULL_MESSAGE = Error("IllegalArgumentException", "message is marked non-null but is null", 400)
+
+UNTRUSTED_IP = Error("ForbiddenOperationException", "Current IP is not secured", 403)
+INCORRECT_ANSWERS = Error("ForbiddenOperationException", "At least one answer was incorrect", 403)
