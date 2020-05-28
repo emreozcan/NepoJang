@@ -1,4 +1,8 @@
-from constant.error import NOT_FOUND, METHOD_NOT_ALLOWED, INTERNAL_ERROR
+from constant.error import NOT_FOUND, METHOD_NOT_ALLOWED, INTERNAL_ERROR, JSON_INVALID
+
+
+def http_error_400():
+    return JSON_INVALID.dual
 
 
 def http_error_404():

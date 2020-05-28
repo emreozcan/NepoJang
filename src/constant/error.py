@@ -34,6 +34,8 @@ METHOD_NOT_ALLOWED = Error("Method Not Allowed", "The method specified in the re
                                                  "not allowed for the resource identified by the request URI", 405)
 INTERNAL_ERROR = Error("Internal Server Error", "The server encountered an unrecoverable "
                                                 "error while trying to fulfill your request", 500)
+BAD_REQUEST = Error("ResourceException", "Bad Request (400) - The request could not be understood by the server "
+                                         "due to malformed syntax", 400)
 
 AUTH_HEADER_MISSING = Error("Unauthorized", "The request requires user authentication", 403)
 
@@ -56,3 +58,6 @@ NULL_MESSAGE = Error("IllegalArgumentException", "message is marked non-null but
 
 UNTRUSTED_IP = Error("ForbiddenOperationException", "Current IP is not secured", 403)
 INCORRECT_ANSWERS = Error("ForbiddenOperationException", "At least one answer was incorrect", 403)
+
+JSON_NULL = BAD_REQUEST
+JSON_INVALID = BAD_REQUEST  # Inconsistent with official API. We do not provide details about the error.

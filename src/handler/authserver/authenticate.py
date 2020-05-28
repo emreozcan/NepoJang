@@ -8,9 +8,11 @@ from pony.orm import db_session
 from constant.error import INVALID_CREDENTIALS, INVALID_TOKEN, NULL_MESSAGE
 from db import ClientToken, Profile, AccessToken
 from handler.authserver._username_password_verify import account_or_none
+from util.decorators import require_json
 
 
 @db_session
+@require_json
 def json_and_response_code(request):
     if "username" not in request.json or "password" not in request.json:
         return NULL_MESSAGE.dual

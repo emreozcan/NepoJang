@@ -5,9 +5,11 @@ from pony.orm import db_session
 
 from constant.error import INVALID_TOKEN, NULL_CLIENT_TOKEN, NULL_ACCESS_TOKEN, PROFILE_ALREADY_ASSIGNED
 from db import AccessToken
+from util.decorators import require_json
 
 
 @db_session
+@require_json
 def json_and_response_code(request):
     if "clientToken" not in request.json or request.json["clientToken"] is None:
         return NULL_CLIENT_TOKEN.dual

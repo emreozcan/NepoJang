@@ -15,6 +15,7 @@ import handler.authserver.invalidate
 import handler.sessionserver.get_skin_cape
 import handler.textures.get_texture
 import handler.error
+from util.decorators import require_json
 
 
 def call(program, argv):
@@ -35,6 +36,10 @@ def call(program, argv):
     )
 
     # region Common
+    @app.errorhandler(400)
+    def http_400(_):
+        return handler.error.http_error_400()
+
     @app.errorhandler(404)
     def http_404(_):
         return handler.error.http_error_404()

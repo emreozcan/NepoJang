@@ -6,7 +6,7 @@ from flask import Request
 from pony.orm import db_session
 from requests import get
 
-from classes.exceptions import InvalidAuthHeaderException
+from util.exceptions import InvalidAuthHeaderException
 from constant.error import INVALID_SKIN, INVALID_UUID, INVALID_TOKEN, AUTH_HEADER_MISSING, MISSING_SKIN, NULL_MESSAGE, \
     INVALID_IMAGE
 from db import AccessToken, Profile

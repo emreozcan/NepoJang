@@ -5,9 +5,11 @@ from pony.orm import db_session
 
 from db import AccessToken
 from handler.authserver._jwt_access_token import read_yggt
+from util.decorators import require_json
 
 
 @db_session
+@require_json
 def json_and_response_code(request):
     if "accessToken" not in request.json:
         return "", 204

@@ -3,9 +3,11 @@ from pony.orm import db_session
 
 from constant.error import OVER_PROFILE_LIMIT
 from db import Profile
+from util.decorators import require_json
 
 
 @db_session
+@require_json
 def json_and_response_code(request):
     if len(request.json) > 10:
         return OVER_PROFILE_LIMIT.dual

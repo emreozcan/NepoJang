@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
-from classes.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsError
+from util.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsError
 from constant.security_questions import questions
 from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
 

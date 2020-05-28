@@ -1,7 +1,8 @@
 from flask import jsonify
 from pony.orm import db_session
 
-from classes.exceptions import InvalidAuthHeaderException, AuthorizationException
+from util.decorators import require_json
+from util.exceptions import InvalidAuthHeaderException, AuthorizationException
 from constant.error import AUTH_HEADER_MISSING, INVALID_TOKEN, UNTRUSTED_IP, INCORRECT_ANSWERS
 from constant.security_questions import questions
 from db import AccessToken
@@ -32,6 +33,7 @@ def list_challenges(request):
 
 
 @db_session
+@require_json
 def location(request):
     try:
         token = AccessToken.from_header(request.headers.get("Authorization"))
