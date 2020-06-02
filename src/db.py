@@ -493,7 +493,7 @@ class AccessToken(db.Entity):
         """Get AccessToken from Authorization Header
 
         :param str header: HTTP Request Header 'Authorization': 'Bearer <token>'
-        :raise InvalidAuthHeaderException: If Header doesn't start with "Bearer" or is empty.
+        :raise InvalidAuthHeaderException: If Header doesn't start with "Bearer " or is empty.
         :rtype: AccessToken or None
         """
         if header is None or not header.startswith("Bearer ") or header == "Bearer ":

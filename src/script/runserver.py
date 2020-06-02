@@ -14,8 +14,9 @@ import handler.authserver.signout
 import handler.authserver.invalidate
 import handler.sessionserver.get_skin_cape
 import handler.textures.get_texture
+import handler.status.check
 import handler.error
-from util.decorators import require_json
+from paths import HTTP_PRIVATE_KEY, HTTP_CERTIFICATE
 
 
 def call(program, argv):
@@ -24,9 +25,11 @@ def call(program, argv):
     parser.add_argument("authserver_host")
     parser.add_argument("sessionserver_host")
     parser.add_argument("textures_host")
+    parser.add_argument("status_host")
     parser.add_argument("-p", "--port", default=80, type=int)
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("-t", "--threaded", action="store_true")
+    parser.add_argument("-https", help="serve https", action="store_true")
 
     args = parser.parse_args(argv)
 
@@ -117,4 +120,14 @@ def call(program, argv):
         return handler.textures.get_texture.json_and_response_code(request, name)
     # endregion
 
-    app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded)
+    # region Status
+    @app.route("/check", methods=["GET"], host=args.status_host)
+    def http_get_status():
+        return handler.status.check.json_and_response_code(request)
+    # endregion
+
+    if args.https:
+        context = (str(HTTP_CERTIFICATE), str(HTTP_PRIVATE_KEY))
+        app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded, ssl_context=context)
+    else:
+        app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded)
