@@ -16,7 +16,10 @@ import handler.sessionserver.get_skin_cape
 import handler.textures.get_texture
 import handler.status.check
 import handler.error
+
 from paths import HTTP_PRIVATE_KEY, HTTP_CERTIFICATE
+from util.crypto.httpcert import create_and_write_http_keys, create_and_write_csr, issue_and_write_certificate
+from util.crypto.rootca import create_and_write_root_certificate
 
 
 def call(program, argv):
@@ -127,6 +130,21 @@ def call(program, argv):
     # endregion
 
     if args.https:
+        create_and_write_root_certificate(overwrite=False)
+        http_certificate_private_key = create_and_write_http_keys(overwrite=False)
+        http_certificate_request = create_and_write_csr(
+            http_key=http_certificate_private_key,
+            domains=[
+                args.api_host,
+                args.authserver_host,
+                args.sessionserver_host,
+                args.textures_host,
+                args.status_host,
+            ],
+            overwrite=True
+        )
+        issue_and_write_certificate(http_certificate_request, overwrite=True)
+
         context = (str(HTTP_CERTIFICATE), str(HTTP_PRIVATE_KEY))
         app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded, ssl_context=context)
     else:
