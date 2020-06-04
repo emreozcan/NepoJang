@@ -4,7 +4,7 @@ import jwt
 from pony.orm import db_session
 
 from db import AccessToken
-from handler.authserver._jwt_access_token import read_yggt
+from util.auth import read_yggt
 from util.decorators import require_json
 
 

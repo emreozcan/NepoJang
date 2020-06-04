@@ -17,8 +17,9 @@ import handler.textures.get_texture
 import handler.status.check
 import handler.error
 
-from paths import HTTP_PRIVATE_KEY, HTTP_CERTIFICATE
+from paths import HTTP_PRIVATE_KEY_PATH, HTTP_CERTIFICATE_PATH, setup as setup_paths
 from util.crypto.httpcert import create_and_write_http_keys, create_and_write_csr, issue_and_write_certificate
+from util.crypto.jwtkeys import create_and_write_jwt_keys
 from util.crypto.rootca import create_and_write_root_certificate
 
 
@@ -129,6 +130,9 @@ def call(program, argv):
         return handler.status.check.json_and_response_code(request)
     # endregion
 
+    setup_paths()
+    create_and_write_jwt_keys(overwrite=False)
+
     if args.https:
         create_and_write_root_certificate(overwrite=False)
         http_certificate_private_key = create_and_write_http_keys(overwrite=False)
@@ -145,7 +149,7 @@ def call(program, argv):
         )
         issue_and_write_certificate(http_certificate_request, overwrite=True)
 
-        context = (str(HTTP_CERTIFICATE), str(HTTP_PRIVATE_KEY))
+        context = (str(HTTP_CERTIFICATE_PATH), str(HTTP_PRIVATE_KEY_PATH))
         app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded, ssl_context=context)
     else:
         app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded)

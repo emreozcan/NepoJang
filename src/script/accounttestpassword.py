@@ -3,7 +3,7 @@ import argparse
 from pony.orm import db_session
 
 from db import Account
-from password import password_compare
+from util.auth import password_compare
 
 
 @db_session

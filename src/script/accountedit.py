@@ -5,7 +5,7 @@ from pony.orm import db_session
 from pony.orm.core import commit
 
 from db import Account
-from password import password_hash
+from util.auth import password_hash
 
 
 @db_session

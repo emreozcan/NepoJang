@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
+from util.crypto.jwtkeys import JWT_PUBLIC_KEY_BYTES
 from util.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsError
 from constant.security_questions import questions
 from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
@@ -542,7 +543,7 @@ class AccessToken(db.Entity):
                 uuid_object = UUID(token)
             except ValueError:  # token is invalid UUID, may be JWT
                 try:
-                    jwt_decoded = jwt.decode(token, verify=False)
+                    jwt_decoded = jwt.decode(jwt=token, key=JWT_PUBLIC_KEY_BYTES, algorithms=["RS256"])
                     uuid_object = UUID(jwt_decoded["yggt"])
                 except (jwt.exceptions.DecodeError, ValueError):
                     return None

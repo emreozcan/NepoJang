@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 from pony.orm import db_session, commit
 
 from db import Account
-from password import password_hash
+from util.auth import password_hash
 
 
 @db_session

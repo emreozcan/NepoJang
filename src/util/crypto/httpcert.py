@@ -6,14 +6,14 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
 
-from paths import HTTP_PRIVATE_KEY, HTTP_PUBLIC_KEY, HTTP_CERT_REQUEST, HTTP_CERTIFICATE,\
-    ROOT_CERTIFICATE, ROOT_PRIVATE_KEY
+from paths import HTTP_PRIVATE_KEY_PATH, HTTP_PUBLIC_KEY_PATH, HTTP_CERT_REQUEST_PATH, HTTP_CERTIFICATE_PATH,\
+    ROOT_CERTIFICATE_PATH, ROOT_PRIVATE_KEY_PATH
 
 
 def create_and_write_http_keys(overwrite=False) -> rsa.RSAPrivateKeyWithSerialization:
-    if not overwrite and HTTP_PUBLIC_KEY.exists() and HTTP_PRIVATE_KEY.exists():
+    if not overwrite and HTTP_PUBLIC_KEY_PATH.exists() and HTTP_PRIVATE_KEY_PATH.exists():
         return serialization.load_pem_private_key(
-            data=HTTP_PRIVATE_KEY.read_bytes(),
+            data=HTTP_PRIVATE_KEY_PATH.read_bytes(),
             password=None,
             backend=default_backend()
         )
@@ -26,14 +26,14 @@ def create_and_write_http_keys(overwrite=False) -> rsa.RSAPrivateKeyWithSerializ
 
     http_pub = http_key.public_key()
 
-    with open(HTTP_PRIVATE_KEY, "wb") as http_key_file:
+    with open(HTTP_PRIVATE_KEY_PATH, "wb") as http_key_file:
         http_key_file.write(http_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption()
         ))
 
-    with open(HTTP_PUBLIC_KEY, "wb") as http_pub_file:
+    with open(HTTP_PUBLIC_KEY_PATH, "wb") as http_pub_file:
         http_pub_file.write(http_pub.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.PKCS1
@@ -44,9 +44,9 @@ def create_and_write_http_keys(overwrite=False) -> rsa.RSAPrivateKeyWithSerializ
 
 def create_and_write_csr(http_key: rsa.RSAPrivateKeyWithSerialization, domains: list, overwrite=True) \
         -> x509.CertificateSigningRequest:
-    if not overwrite and HTTP_CERT_REQUEST.exists():
+    if not overwrite and HTTP_CERT_REQUEST_PATH.exists():
         return x509.load_pem_x509_csr(
-            data=HTTP_CERT_REQUEST.read_bytes(),
+            data=HTTP_CERT_REQUEST_PATH.read_bytes(),
             backend=default_backend()
         )
 
@@ -64,24 +64,24 @@ def create_and_write_csr(http_key: rsa.RSAPrivateKeyWithSerialization, domains: 
         .add_extension(x509.SubjectAlternativeName(alt_names), critical=False)\
         .sign(http_key, hashes.SHA512(), default_backend())
 
-    with open(HTTP_CERT_REQUEST, "wb") as http_csr_file:
+    with open(HTTP_CERT_REQUEST_PATH, "wb") as http_csr_file:
         http_csr_file.write(certificate_request.public_bytes(serialization.Encoding.PEM))
 
     return certificate_request
 
 
 def issue_and_write_certificate(certificate_request, overwrite=True) -> None:
-    if not overwrite and HTTP_CERTIFICATE.exists():
+    if not overwrite and HTTP_CERTIFICATE_PATH.exists():
         return
 
     root_key = serialization.load_pem_private_key(
-        data=ROOT_PRIVATE_KEY.read_bytes(),
+        data=ROOT_PRIVATE_KEY_PATH.read_bytes(),
         backend=default_backend(),
         password=None
     )
 
     root_cert = x509.load_pem_x509_certificate(
-        data=ROOT_CERTIFICATE.read_bytes(),
+        data=ROOT_CERTIFICATE_PATH.read_bytes(),
         backend=default_backend()
     )
 
@@ -124,7 +124,7 @@ def issue_and_write_certificate(certificate_request, overwrite=True) -> None:
 
     new_cert = new_cert.sign(root_key, hashes.SHA512(), backend=default_backend())
 
-    with open(HTTP_CERTIFICATE, "wb") as http_crt_file:
+    with open(HTTP_CERTIFICATE_PATH, "wb") as http_crt_file:
         http_crt_file.write(new_cert.public_bytes(serialization.Encoding.PEM))
 
 

@@ -7,7 +7,8 @@ from pony.orm import db_session
 
 from constant.error import INVALID_CREDENTIALS, INVALID_TOKEN, NULL_MESSAGE
 from db import ClientToken, Profile, AccessToken
-from handler.authserver._username_password_verify import account_or_none
+from util.auth import attempt_login
+from util.crypto.jwtkeys import JWT_PRIVATE_KEY_BYTES
 from util.decorators import require_json
 
 
@@ -17,7 +18,7 @@ def json_and_response_code(request):
     if "username" not in request.json or "password" not in request.json:
         return NULL_MESSAGE.dual
 
-    account = account_or_none(request.json["username"], request.json["password"])
+    account = attempt_login(request.json["username"], request.json["password"])
     if account is None:
         return INVALID_CREDENTIALS.dual
 
@@ -54,7 +55,7 @@ def json_and_response_code(request):
     )
 
     response_data = {
-        "accessToken": jwt.encode(access_token.format(), key="").decode(),
+        "accessToken": jwt.encode(access_token.format(), key=JWT_PRIVATE_KEY_BYTES, algorithm="RS256").decode(),
         "clientToken": client_token.uuid.hex
     }
 
