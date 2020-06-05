@@ -19,7 +19,7 @@ def json_and_response_code(request, uuid, textures_host):
     if profile is None:
         return "", 204
 
-    return jsonify({
+    data = {
         "id": profile.uuid.hex,
         "name": profile.name,
         "properties": [
@@ -29,4 +29,10 @@ def json_and_response_code(request, uuid, textures_host):
                 # "signature": ""  # todo?
             }
         ]
-    }), 200
+    }
+
+    unsigned = request.args.get("unsigned")
+    if unsigned is not None and unsigned == "false":
+        pass
+
+    return jsonify(data), 200

@@ -13,7 +13,6 @@ import handler.authserver.validate
 import handler.authserver.signout
 import handler.authserver.invalidate
 import handler.sessionserver.get_skin_cape
-import handler.textures.get_texture
 import handler.status.check
 import handler.error
 
@@ -25,19 +24,18 @@ from util.crypto.rootca import create_and_write_root_certificate
 
 def call(program, argv):
     parser = argparse.ArgumentParser(prog=program)
-    parser.add_argument("api_host")
+    parser.add_argument("api_host", help="Also used for IP and static host")
     parser.add_argument("authserver_host")
     parser.add_argument("sessionserver_host")
     parser.add_argument("textures_host")
     parser.add_argument("status_host")
-    parser.add_argument("-p", "--port", default=80, type=int)
+    parser.add_argument("-p", "--port", default=443, type=int)
     parser.add_argument("-d", "--debug", action="store_true")
     parser.add_argument("-t", "--threaded", action="store_true")
-    parser.add_argument("-https", help="serve https", action="store_true")
 
     args = parser.parse_args(argv)
 
-    app = Flask(__name__, host_matching=True, static_host=args.textures_host)
+    app = Flask(__name__, host_matching=True, static_host=args.api_host)
     app.config.update(
         MAX_CONTENT_LENGTH=16 * 1024,  # 16 kB
     )
@@ -55,9 +53,9 @@ def call(program, argv):
     def http_405(_):
         return handler.error.http_error_405()
 
-    # @app.errorhandler(500)
-    # def http_500(e):
-    #     return handler.error.unhandled_server_error_500()
+    @app.errorhandler(500)
+    def http_500(_):
+        return handler.error.unhandled_server_error_500()
     # endregion
 
     # region API
@@ -118,12 +116,6 @@ def call(program, argv):
         return "", 200
     # endregion
 
-    # region Textures
-    @app.route("/texture/<name>", methods=["GET"], host=args.textures_host)
-    def http_get_texture(name):
-        return handler.textures.get_texture.json_and_response_code(request, name)
-    # endregion
-
     # region Status
     @app.route("/check", methods=["GET"], host=args.status_host)
     def http_get_status():
@@ -133,23 +125,19 @@ def call(program, argv):
     setup_paths()
     create_and_write_jwt_keys(overwrite=False)
 
-    if args.https:
-        create_and_write_root_certificate(overwrite=False)
-        http_certificate_private_key = create_and_write_http_keys(overwrite=False)
-        http_certificate_request = create_and_write_csr(
-            http_key=http_certificate_private_key,
-            domains=[
-                args.api_host,
-                args.authserver_host,
-                args.sessionserver_host,
-                args.textures_host,
-                args.status_host,
-            ],
-            overwrite=True
-        )
-        issue_and_write_certificate(http_certificate_request, overwrite=True)
+    create_and_write_root_certificate(overwrite=False)
+    http_certificate_private_key = create_and_write_http_keys(overwrite=False)
+    http_certificate_request = create_and_write_csr(
+        http_key=http_certificate_private_key,
+        domains=[
+            args.api_host,
+            args.authserver_host,
+            args.sessionserver_host,
+            args.status_host,
+        ],
+        overwrite=True
+    )
+    issue_and_write_certificate(http_certificate_request, overwrite=True)
 
-        context = (str(HTTP_CERTIFICATE_PATH), str(HTTP_PRIVATE_KEY_PATH))
-        app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded, ssl_context=context)
-    else:
-        app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded)
+    context = (str(HTTP_CERTIFICATE_PATH), str(HTTP_PRIVATE_KEY_PATH))
+    app.run(host=args.api_host, port=args.port, debug=args.debug, threaded=args.threaded, ssl_context=context)
