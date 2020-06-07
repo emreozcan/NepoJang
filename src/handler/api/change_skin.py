@@ -8,7 +8,7 @@ from requests import get
 
 from util.exceptions import InvalidAuthHeaderException
 from constant.error import INVALID_SKIN, INVALID_UUID, INVALID_TOKEN, AUTH_HEADER_MISSING, MISSING_SKIN, NULL_MESSAGE, \
-    INVALID_IMAGE
+    INVALID_IMAGE, UNTRUSTED_IP
 from db import AccessToken, Profile
 
 
@@ -48,6 +48,9 @@ def json_and_response_code(request: Request, uuid):
     if profile is None or profile.account != token.client_token.account:
         # May be inconsistent with official API
         return INVALID_TOKEN.dual
+
+    if not profile.account.does_trust_ip(request.remote_addr):
+        return UNTRUSTED_IP.dual
 
     if request.method == "POST":
         if "model" not in request.form or "url" not in request.form:

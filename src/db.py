@@ -74,6 +74,8 @@ class Account(db.Entity):
     def does_trust_ip(self, address: str) -> bool:
         """Check if an IP is trusted
 
+        Returns True if there are no security questions.
+
         :param str address: IP address to check
         :return: True if trusted, False if untrusted.
         """
