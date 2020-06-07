@@ -1,11 +1,10 @@
-from base64 import b64encode
-from json import dumps
 from uuid import UUID
 
 from flask import jsonify
 from pony.orm import db_session
 
 from db import Profile
+from util.public_profile_details import get_public_profile_details
 
 
 @db_session
@@ -19,20 +18,7 @@ def json_and_response_code(request, uuid, textures_host):
     if profile is None:
         return "", 204
 
-    data = {
-        "id": profile.uuid.hex,
-        "name": profile.name,
-        "properties": [
-            {
-                "name": "textures",  # Who puts a "name" field in a list member? Just make a dict!
-                "value": b64encode(dumps(profile.get_texture_data(textures_host)).encode("utf-8")).decode("utf-8"),
-                # "signature": ""  # todo?
-            }
-        ]
-    }
-
     unsigned = request.args.get("unsigned")
     if unsigned is not None and unsigned == "false":
-        pass
-
-    return jsonify(data), 200
+        return jsonify(get_public_profile_details(profile, False, textures_host)), 200
+    return jsonify(get_public_profile_details(profile, True, textures_host)), 200

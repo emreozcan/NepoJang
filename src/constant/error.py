@@ -59,5 +59,9 @@ NULL_MESSAGE = Error("IllegalArgumentException", "message is marked non-null but
 UNTRUSTED_IP = Error("ForbiddenOperationException", "Current IP is not secured", 403)
 INCORRECT_ANSWERS = Error("ForbiddenOperationException", "At least one answer was incorrect", 403)
 
+MCSERVER_DIFFERENT_IP = Error("ForbiddenOperationException", "User IP differs from provided IP.", 403)
+MCSERVER_INVALID_SESSION = Error("ForbiddenOperationException", "Invalid session", 403)
+MCSERVER_INVALID_PROFILE = Error("ForbiddenOperationException", "Invalid profile", 403)
+
 JSON_NULL = BAD_REQUEST
 JSON_INVALID = BAD_REQUEST  # Inconsistent with official API. We do not provide details about the error.

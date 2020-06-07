@@ -13,6 +13,7 @@ import handler.authserver.validate
 import handler.authserver.signout
 import handler.authserver.invalidate
 import handler.sessionserver.get_skin_cape
+import handler.sessionserver.mcserver_auth
 import handler.status.check
 import handler.error
 
@@ -114,6 +115,14 @@ def call(program, argv):
     @app.route("/blockedservers", methods=["GET"], host=args.sessionserver_host)
     def http_get_blocked_servers():
         return "", 200
+
+    @app.route("/session/minecraft/join", methods=["POST"], host=args.sessionserver_host)
+    def http_mcserver_auth_clientside():
+        return handler.sessionserver.mcserver_auth.join_mcclient(request)
+
+    @app.route("/session/minecraft/hasJoined", methods=["GET"], host=args.sessionserver_host)
+    def http_mcserver_auth_serverside():
+        return handler.sessionserver.mcserver_auth.join_mcserver(request, args.textures_host)
     # endregion
 
     # region Status

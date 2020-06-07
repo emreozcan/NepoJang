@@ -147,6 +147,8 @@ class Profile(db.Entity):
     profile_skin = Optional('ProfileSkin', cascade_delete=True)
     profile_cape = Optional('ProfileCape', cascade_delete=True)
 
+    mcserver_sessions = Set('MCServerSession')
+
     def reset_skin(self):
         """Delete ProfileSkin and corresponding file.
 
@@ -451,6 +453,16 @@ class Profile(db.Entity):
         return repr(self)
 
 
+class MCServerSession(db.Entity):
+    id = PrimaryKey(int, auto=True)
+
+    profile = Required(Profile)
+    client_side_ip = Required(str)
+    server_hash = Required(str)
+
+    created_utc = Required(datetime, default=datetime.utcnow)
+
+
 class ClientToken(db.Entity):
     id = PrimaryKey(int, auto=True)
     uuid = Required(UUID, unique=True, default=uuid4)
@@ -547,7 +559,7 @@ class AccessToken(db.Entity):
                 try:
                     jwt_decoded = jwt.decode(jwt=token, key=JWT_PUBLIC_KEY_BYTES, algorithms=["RS256"])
                     uuid_object = UUID(jwt_decoded["yggt"])
-                except (jwt.exceptions.DecodeError, ValueError):
+                except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidAlgorithmError, ValueError):
                     return None
                 else:
                     return AccessToken.get(uuid=uuid_object)
