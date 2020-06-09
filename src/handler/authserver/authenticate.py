@@ -25,6 +25,7 @@ def json_and_response_code(request):
     client_token: ClientToken
     if "clientToken" not in request.json:
         client_token = ClientToken(account=account)
+        client_token_string = client_token.uuid.hex
     else:
         try:
             client_token_uuid = UUID(request.json["clientToken"])
@@ -32,15 +33,16 @@ def json_and_response_code(request):
             return INVALID_TOKEN.dual
 
         client_token = ClientToken.get(uuid=client_token_uuid)
-        if client_token is not None and client_token.account != account:  # requested clientToken is different account's
-            # May be inconsistent with official API
-            return INVALID_CREDENTIALS.dual
+        if client_token is not None and client_token.account != account:
+            client_token.account = account
 
         elif client_token is None:  # there's no client token with requested UUID
             client_token = ClientToken(account=account, uuid=client_token_uuid)
 
         else:  # requested clientToken exists and owned by authorized account
             client_token.refresh()
+
+        client_token_string = request.json["clientToken"]
 
     optional_profile = {}
     if "agent" in request.json:
@@ -56,7 +58,7 @@ def json_and_response_code(request):
 
     response_data = {
         "accessToken": jwt.encode(access_token.format(), key=JWT_PRIVATE_KEY_BYTES, algorithm="RS256").decode(),
-        "clientToken": client_token.uuid.hex
+        "clientToken": client_token_string
     }
 
     if "requestUser" in request.json and request.json["requestUser"]:
@@ -65,14 +67,16 @@ def json_and_response_code(request):
             "id": account.uuid.hex
         }
 
-    if "profile" in optional_profile:
-        response_data["selectedProfile"] = {
-            "name": optional_profile["profile"].name,
-            "id": optional_profile["profile"].uuid.hex
-        }
-        response_data["availableProfiles"] = [response_data["selectedProfile"]]
-    else:
-        response_data["availableProfiles"] = []
+    response_data["availableProfiles"] = []
+    if "agent" in request.json:
+        for profile in available_profiles:
+            response_data["availableProfiles"].append({
+                "name": profile.name,
+                "id": profile.uuid.hex,
+            })
+
+        if len(available_profiles) == 1:
+            response_data["selectedProfile"] = response_data["availableProfiles"][0]
 
     for token in AccessToken \
             .select(lambda candidate: candidate.client_token.account == account and candidate != access_token):

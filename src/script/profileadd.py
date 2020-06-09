@@ -24,10 +24,6 @@ def call(program, argv):
         print("No account matches that DBID!")
         exit(1)
 
-    if account.profiles.count() != 0:
-        print(f"Account already has a profile!\n({list(account.profiles)[0]})")
-        exit(1)
-
     if not Profile.name_available_for_creation(args.name):
         print("Name not available.")
         exit(1)

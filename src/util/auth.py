@@ -1,7 +1,6 @@
 from passlib.context import CryptContext
 import jwt
 
-from util.crypto.jwtkeys import JWT_PUBLIC_KEY_BYTES
 from db import Account
 
 password_crypto_context = CryptContext(
@@ -29,7 +28,7 @@ def read_yggt(access_token_string: str):
     elif len(access_token_string) == 36:
         return access_token_string.replace("-", "")
     else:
-        return jwt.decode(jwt=access_token_string, key=JWT_PUBLIC_KEY_BYTES, algorithms=["RS256"])["yggt"]
+        return jwt.decode(jwt=access_token_string, verify=False)["yggt"]
 
 
 def attempt_login(username: str, password: str):

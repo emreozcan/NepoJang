@@ -557,7 +557,7 @@ class AccessToken(db.Entity):
                 uuid_object = UUID(token)
             except ValueError:  # token is invalid UUID, may be JWT
                 try:
-                    jwt_decoded = jwt.decode(jwt=token, key=JWT_PUBLIC_KEY_BYTES, algorithms=["RS256"])
+                    jwt_decoded = jwt.decode(jwt=token, verify=False)
                     uuid_object = UUID(jwt_decoded["yggt"])
                 except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidAlgorithmError, ValueError):
                     return None

@@ -51,7 +51,7 @@ INVALID_CREDENTIALS_RATE_LIMIT = Error("TooManyRequestsException", "Invalid cred
 INVALID_IMAGE = Error("IllegalArgumentException", "Provided image is illegal or invalid.", 400)
 
 OVER_PROFILE_LIMIT = Error("IllegalArgumentException", "Not more than 10 profile name per call is allowed.", 400)
-PROFILE_ALREADY_ASSIGNED = Error("IllegalArgumentException", "Access token already has a profile assigned.", 400)
+PROFILE_NOT_FOUND = Error("ForbiddenOperationException", "There is no such profile.", 403)
 
 MISSING_SKIN = Error("IllegalArgumentException", "Model or skin URL missing.", 400)
 NULL_MESSAGE = Error("IllegalArgumentException", "message is marked non-null but is null", 400)

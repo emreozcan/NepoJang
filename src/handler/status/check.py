@@ -15,4 +15,11 @@ services = {
 
 
 def json_and_response_code(request):
-    return jsonify([{s[0]: s[1]} for s in services.items()]), 200
+    service = request.args.get("service")
+    if service is None:
+        return jsonify([{s[0]: s[1]} for s in services.items()]), 200
+
+    if service not in services:
+        return f"Unknown service: {service}", 200
+
+    return jsonify({service: services[service]}), 200
