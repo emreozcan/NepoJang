@@ -402,6 +402,8 @@ class Profile(db.Entity):
         :param name: Case-insensitive profile name
         :return: True if name is released
         """
+        if Profile.get_profile_with_name(name) is not None:
+            return False
         return Profile.time_to_name_release(name) < timedelta(0)
 
     @staticmethod
