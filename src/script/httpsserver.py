@@ -19,7 +19,6 @@ import handler.error
 
 from paths import HTTP_PRIVATE_KEY_PATH, HTTP_CERTIFICATE_PATH, setup as setup_paths
 from util.crypto.httpcert import create_and_write_http_keys, create_and_write_csr, issue_and_write_certificate
-from util.crypto.jwtkeys import create_and_write_jwt_keys
 from util.crypto.rootca import create_and_write_root_certificate
 
 
@@ -132,7 +131,6 @@ def call(program, argv):
     # endregion
 
     setup_paths()
-    create_and_write_jwt_keys(overwrite=False)
 
     create_and_write_root_certificate(overwrite=False)
     http_certificate_private_key = create_and_write_http_keys(overwrite=False)

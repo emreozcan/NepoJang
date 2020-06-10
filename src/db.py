@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
-import jwt
+from jwt import decode as jwt_decode, exceptions as jwt_exceptions
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
 from util.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsException
@@ -561,9 +561,9 @@ class AccessToken(db.Entity):
                 uuid_object = UUID(token)
             except ValueError:  # token is invalid UUID, may be JWT
                 try:
-                    jwt_decoded = jwt.decode(jwt=token, verify=False)
+                    jwt_decoded = jwt_decode(jwt=token, verify=False)
                     uuid_object = UUID(jwt_decoded["yggt"])
-                except (jwt.exceptions.DecodeError, jwt.exceptions.InvalidAlgorithmError, ValueError):
+                except (jwt_exceptions.DecodeError, jwt_exceptions.InvalidAlgorithmError, ValueError):
                     return None
                 else:
                     return AccessToken.get(uuid=uuid_object)

@@ -22,10 +22,6 @@ ROOT_PRIVATE_KEY_PATH = CRYPTO_ROOT.joinpath("root.key")
 ROOT_PUBLIC_KEY_PATH = CRYPTO_ROOT.joinpath("root.pub")
 ROOT_CERTIFICATE_PATH = CRYPTO_ROOT.joinpath("root.crt")
 
-JWT_PRIVATE_KEY_PATH = CRYPTO_ROOT.joinpath("jwt.key")
-JWT_PUBLIC_KEY_PATH = CRYPTO_ROOT.joinpath("jwt.pub")
-JWT_PUBLIC_KEY_DER_PATH = CRYPTO_ROOT.joinpath("jwt.der")
-
 ROOTS = [
     PROJECT_ROOT,
     DATA_ROOT,

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-import jwt
+from jwt import exceptions as jwt_exceptions
 from pony.orm import db_session
 
 from db import AccessToken
@@ -20,7 +20,7 @@ def json_and_response_code(request):
         if "clientToken" in request.json:
             request_client_token_uuid = UUID(request.json["clientToken"])
             access_tokens = access_tokens.filter(lambda tkn: tkn.client_token.uuid == request_client_token_uuid)
-    except (jwt.exceptions.DecodeError, ValueError):
+    except (jwt_exceptions.DecodeError, ValueError):
         return "", 204
 
     access_tokens.delete()

@@ -2,12 +2,11 @@ from uuid import UUID
 
 from flask import jsonify
 
-import jwt
+from jwt import encode as jwt_encode
 from pony.orm import db_session
 
 from constant.error import INVALID_TOKEN, NULL_CLIENT_TOKEN, NULL_ACCESS_TOKEN, INVALID_UUID, PROFILE_NOT_FOUND
 from db import AccessToken, Profile
-from util.crypto.jwtkeys import JWT_PRIVATE_KEY_BYTES
 from util.decorators import require_json
 
 
@@ -49,7 +48,7 @@ def json_and_response_code(request):
     access_token.delete()
 
     response_data = {
-        "accessToken": jwt.encode(new_access_token.format(), key=JWT_PRIVATE_KEY_BYTES, algorithm="RS256").decode(),
+        "accessToken": jwt_encode(new_access_token.format(), key="").decode(),
         "clientToken": request.json["clientToken"],
     }
 
