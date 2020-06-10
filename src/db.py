@@ -139,9 +139,9 @@ class Profile(db.Entity):
     access_tokens = Set('AccessToken')
     profile_name_events = Set('ProfileNameEvent')
 
-    name = Required(str)
-    name_upper = Required(str)
-    name_lower = Required(str)
+    name = Required(str, unique=True)
+    name_upper = Required(str, unique=True)
+    name_lower = Required(str, unique=True)
 
     profile_skin = Optional('ProfileSkin', cascade_delete=True)
     profile_cape = Optional('ProfileCape', cascade_delete=True)
