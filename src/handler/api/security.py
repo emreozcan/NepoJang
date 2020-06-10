@@ -4,7 +4,7 @@ from pony.orm import db_session
 from util.decorators import require_json
 from util.exceptions import InvalidAuthHeaderException, AuthorizationException
 from constant.error import AUTH_HEADER_MISSING, INVALID_TOKEN, UNTRUSTED_IP, INCORRECT_ANSWERS
-from constant.security_questions import questions
+from constant.security_questions import SECURITY_QUESTIONS
 from db import AccessToken
 
 
@@ -26,7 +26,7 @@ def list_challenges(request):
             },
             "question": {
                 "id": question.question_id,
-                "question": questions[question.question_id]
+                "question": SECURITY_QUESTIONS[question.question_id]
             }
         })
     return jsonify(return_questions), 200

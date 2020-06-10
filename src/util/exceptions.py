@@ -10,9 +10,6 @@ class InvalidAuthHeaderException(AuthorizationException):
     pass
 
 
-class InvalidTokenException(AuthorizationException):
-    pass
-
-
-class ExistsError(NepoJangException):
+class ExistsException(NepoJangException):
+    """A field that was supposed to be unique would not be unique if this operation was completed."""
     pass

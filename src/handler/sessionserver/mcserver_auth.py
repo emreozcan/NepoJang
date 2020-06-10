@@ -3,8 +3,8 @@ from uuid import UUID
 from flask import Request, jsonify
 from pony.orm import db_session
 
-from constant.error import NULL_ACCESS_TOKEN, NULL_MESSAGE, INVALID_UUID, INVALID_TOKEN, BAD_REQUEST, \
-    MCSERVER_DIFFERENT_IP, MCSERVER_INVALID_SESSION, MCSERVER_INVALID_PROFILE
+from constant.error import NULL_ACCESS_TOKEN, NULL_MESSAGE, INVALID_UUID, INVALID_TOKEN, MCSERVER_DIFFERENT_IP, \
+    MCSERVER_INVALID_SESSION, MCSERVER_INVALID_PROFILE
 from db import AccessToken, Profile, MCServerSession
 from util.decorators import require_json
 from util.public_profile_details import get_public_profile_details

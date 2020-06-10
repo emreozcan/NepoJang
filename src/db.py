@@ -4,9 +4,8 @@ from uuid import UUID, uuid4
 import jwt
 from pony.orm import set_sql_debug, Database, PrimaryKey, Required, Set, Optional, desc
 
-from util.crypto.jwtkeys import JWT_PUBLIC_KEY_BYTES
-from util.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsError
-from constant.security_questions import questions
+from util.exceptions import InvalidAuthHeaderException, AuthorizationException, ExistsException
+from constant.security_questions import SECURITY_QUESTIONS
 from paths import DB_PATH, SKINS_ROOT, CAPES_ROOT
 
 set_sql_debug(False)
@@ -33,10 +32,10 @@ class Account(db.Entity):
         :raise ExistsError: If the account already has a question with given ID.
         :rtype: SecurityQuestion
         """
-        if question_id not in questions:
+        if question_id not in SECURITY_QUESTIONS:
             raise ValueError(f"Invalid question ID {question_id}")
         if SecurityQuestion.select(lambda x: x.account == self and x.question_id == question_id).count() != 0:
-            raise ExistsError(f"This account already has a question with ID {question_id}.")
+            raise ExistsException(f"This account already has a question with ID {question_id}.")
         return SecurityQuestion(
             account=self,
             question_id=question_id,
@@ -115,7 +114,7 @@ class SecurityQuestion(db.Entity):
     answer = Required(str)
 
     def __repr__(self):
-        return f"{self.id}, {questions[self.question_id]} ({self.answer}) " \
+        return f"{self.id}, {SECURITY_QUESTIONS[self.question_id]} ({self.answer}) " \
                f"-of> {self.account.id}, {self.account.username}"
 
     def __str__(self):
@@ -140,9 +139,9 @@ class Profile(db.Entity):
     access_tokens = Set('AccessToken')
     profile_name_events = Set('ProfileNameEvent')
 
-    name = Required(str, unique=True)
-    name_upper = Required(str, unique=True)
-    name_lower = Required(str, unique=True)
+    name = Required(str)
+    name_upper = Required(str)
+    name_lower = Required(str)
 
     profile_skin = Optional('ProfileSkin', cascade_delete=True)
     profile_cape = Optional('ProfileCape', cascade_delete=True)
@@ -240,7 +239,7 @@ class Profile(db.Entity):
 
         return data
 
-    def set_name_and_styles(self, new_name):
+    def force_set_name(self, new_name):
         """Set profile name without modifying history.
 
         Modify Profile.name, and the other styles.
@@ -253,7 +252,7 @@ class Profile(db.Entity):
         self.name_upper = new_name.upper()
         self.name_lower = new_name.lower()
 
-    def attempt_name_change(self, new_name_attempt):
+    def change_name(self, new_name_attempt):
         """Try to change profile's name.
 
         Change profile's name to the new name and add ProfileNameEvents.
@@ -263,13 +262,13 @@ class Profile(db.Entity):
         :param str new_name_attempt: New profile name
         :raise pony.orm.dbapiprovider.IntegrityError: While committing to the database if the profile name was taken.
         """
-        self.set_name_and_styles(new_name_attempt)
+        self.force_set_name(new_name_attempt)
         ProfileNameEvent(
             profile=self,
             name=new_name_attempt
         )
 
-    def get_active_name_event_at(self, datetime_object: datetime):
+    def owned_name_at(self, datetime_object: datetime):
         """Find active ProfileNameEvent at time.
 
         Find most recent ProfileNameEvent older than given time.
@@ -282,14 +281,14 @@ class Profile(db.Entity):
         :rtype: ProfileNameEvent
         """
         if datetime == datetime.utcfromtimestamp(0):
-            self.get_first_name_event()
+            self.initial_name_event()
 
         pne = ProfileNameEvent.select(lambda x: x.profile == self and x.active_from < datetime_object)\
             .order_by(desc(ProfileNameEvent.active_from))
         return pne.first()
 
     @staticmethod
-    def get_owner_profile_at(name, datetime_object: datetime):
+    def that_owned_name_at(name, datetime_object: datetime):
         """Find profile that owned the name at time.
 
         :param name: Case-insensitive profile name
@@ -313,43 +312,43 @@ class Profile(db.Entity):
 
         return event
 
-    def get_first_name_event(self):
+    def initial_name_event(self):
         """Get initial NameEvent for this profile.
 
         :rtype: ProfileNameEvent
         """
         return ProfileNameEvent.select(lambda x: x.profile == self).order_by(ProfileNameEvent.active_from).first()
 
-    def get_last_name_event(self):
+    def active_name_event(self):
         """Get active NameEvent for this profile.
 
         :rtype: ProfileNameEvent
         """
         return ProfileNameEvent.select(lambda x: x.profile == self).order_by(desc(ProfileNameEvent.active_from)).first()
 
-    def name_change_time_until(self) -> datetime:
+    def time_of_next_name_change(self) -> datetime:
         """Find when profile name can be changed.
 
         :return: Datetime when profile name can be changed
         """
-        return self.get_last_name_event().active_from + timedelta(days=30)
+        return self.active_name_event().active_from + timedelta(days=30)
 
-    def name_change_wait_delta(self) -> timedelta:
+    def time_to_name_change(self) -> timedelta:
         """Find when profile name can be changed.
 
         :return: Timedelta which needs to be waited before profile name can be changed
         """
-        return self.name_change_time_until() - datetime.utcnow()
+        return self.time_of_next_name_change() - datetime.utcnow()
 
-    def name_change_is_allowed(self) -> bool:
+    def can_change_name(self) -> bool:
         """Find if profile name can be changed.
 
         :return: True if 30 days has passed after last Profile name change
         """
-        return self.name_change_wait_delta() < timedelta(0)
+        return self.time_to_name_change() < timedelta(0)
 
     @staticmethod
-    def name_taken_time_until(name) -> datetime:
+    def time_of_name_release(name) -> datetime:
         """Find when profile name will be released.
 
         This function assumes that the name is taken and the previous owner doesn't change it back.
@@ -365,7 +364,7 @@ class Profile(db.Entity):
         return event.active_from + timedelta(days=37)
 
     @staticmethod
-    def name_taken_wait_delta(name) -> timedelta:
+    def time_to_name_release(name) -> timedelta:
         """Find when profile name will be released.
 
         This function assumes that the name is taken and the previous owner doesn't change it back.
@@ -375,9 +374,9 @@ class Profile(db.Entity):
         :param name: Case-insensitive profile name
         :return: Timedelta which needs to be waited before profile name can be changed
         """
-        return Profile.name_taken_time_until(name) - datetime.utcnow()
+        return Profile.time_of_name_release(name) - datetime.utcnow()
 
-    def name_available_for_change(self, name) -> bool:
+    def is_name_available_for_change(self, name) -> bool:
         """Determine if this name is available.
 
         This function does not check whether profile is allowed to change names.
@@ -391,10 +390,10 @@ class Profile(db.Entity):
             return True
         if event.profile == self:
             return True
-        return Profile.name_available_for_creation(name)
+        return Profile.is_name_available_for_creation(name)
 
     @staticmethod
-    def name_available_for_creation(name) -> bool:
+    def is_name_available_for_creation(name) -> bool:
         """Determine if this name is released.
 
         Released means it has passed 37 days after the name was last used by another profile.
@@ -403,10 +402,10 @@ class Profile(db.Entity):
         :param name: Case-insensitive profile name
         :return: True if name is released
         """
-        return Profile.name_taken_wait_delta(name) < timedelta(0)
+        return Profile.time_to_name_release(name) < timedelta(0)
 
     @staticmethod
-    def create_profile_and_history(*args, **kwargs):
+    def create(*args, **kwargs):
         """Create a new profile.
 
         Creates and returns a new profile instance.
@@ -417,9 +416,14 @@ class Profile(db.Entity):
 
         :param args: Arguments will be passed onto Profile.
         :param kwargs: Keyword arguments will be passed onto Profile. "name" is required for this function.
+        :raise ExistsError: If name was already taken
         :return: Newly created profile object
         :rtype: Profile
         """
+
+        if not Profile.is_name_available_for_creation(kwargs["name"]):
+            raise ExistsException("A profile with this name already exists!")
+
         new_profile = Profile(*args, **kwargs)
         ProfileNameEvent(
             active_from=datetime.utcfromtimestamp(0),

@@ -19,7 +19,7 @@ def call(program, argv):
     if args.time is None:
         args.time = datetime.utcnow()
 
-    event = Profile.get_owner_profile_at(args.name, args.time)
+    event = Profile.that_owned_name_at(args.name, args.time)
 
     print(f"History of {args.name}")
 

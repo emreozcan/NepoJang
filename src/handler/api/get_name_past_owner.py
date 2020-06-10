@@ -17,7 +17,7 @@ def json_and_response_code(request, username):
         except (ValueError, OSError):
             return INVALID_TIMESTAMP.dual
 
-    event = Profile.get_owner_profile_at(username, at)
+    event = Profile.that_owned_name_at(username, at)
     if event is None:
         return "", 204
 

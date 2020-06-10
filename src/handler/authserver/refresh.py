@@ -32,7 +32,10 @@ def json_and_response_code(request):
             _selected_uuid = UUID(request.json["selectedProfile"]["id"])
         except ValueError:
             return INVALID_UUID.dual
-        new_profile = Profile.get(lambda x: x.uuid == _selected_uuid and x.name == request.json["selectedProfile"]["name"] and x.account == access_token.client_token.account)
+        new_profile = Profile.get(lambda x:
+                                  x.uuid == _selected_uuid
+                                  and x.name == request.json["selectedProfile"]["name"]
+                                  and x.account == access_token.client_token.account)
         if new_profile is None:
             return PROFILE_NOT_FOUND.dual
     else:

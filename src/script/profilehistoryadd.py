@@ -23,15 +23,15 @@ def call(program, argv):
         print("No profile matches that DBID!")
         exit(1)
 
-    if not (args.bypass_wait or profile.name_change_is_allowed()):
-        print(f"Cannot change name until {profile.name_change_time_until()}. Wait {profile.name_change_wait_delta()}.")
+    if not (args.bypass_wait or profile.can_change_name()):
+        print(f"Cannot change name until {profile.time_of_next_name_change()}. Wait {profile.time_to_name_change()}.")
         exit(1)
 
-    if not (args.bypass_lock or profile.name_available_for_change(args.name)):
+    if not (args.bypass_lock or profile.is_name_available_for_change(args.name)):
         print("Name not available.")
         exit(1)
 
-    profile.attempt_name_change(args.name)
+    profile.change_name(args.name)
 
     try:
         commit()

@@ -1,4 +1,4 @@
-questions = {
+SECURITY_QUESTIONS = {
     1: "What is your favorite pet's name?",
     2: "What is your favorite movie?",
     3: "What is your favorite author's last name?",

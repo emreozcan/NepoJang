@@ -2,7 +2,7 @@ import argparse
 
 from pony.orm import db_session, commit
 
-from constant.security_questions import questions
+from constant.security_questions import SECURITY_QUESTIONS
 from db import Account
 
 
@@ -21,7 +21,7 @@ def call(program, argv):
         print("There is no account with this DBID.")
         exit(1)
 
-    if args.qid not in questions:
+    if args.qid not in SECURITY_QUESTIONS:
         print("Invalid question id.")
         exit(1)
 

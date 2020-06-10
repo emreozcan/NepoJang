@@ -4,6 +4,7 @@ from uuid import uuid4, UUID
 from pony.orm import db_session, commit
 
 from db import Account, Profile
+from util.exceptions import ExistsException
 
 
 @db_session
@@ -24,16 +25,16 @@ def call(program, argv):
         print("No account matches that DBID!")
         exit(1)
 
-    if not Profile.name_available_for_creation(args.name):
+    try:
+        profile = Profile.create(
+            uuid=input_uuid,
+            agent=args.agent,
+            account=account,
+            name=args.name
+        )
+    except ExistsException:
         print("Name not available.")
         exit(1)
-
-    profile = Profile.create_profile_and_history(
-        uuid=input_uuid,
-        agent=args.agent,
-        account=account,
-        name=args.name
-    )
 
     try:
         commit()
